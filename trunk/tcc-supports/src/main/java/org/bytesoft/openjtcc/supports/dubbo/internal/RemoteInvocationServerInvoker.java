@@ -275,8 +275,4 @@ public class RemoteInvocationServerInvoker implements RemoteInvocationService {
 		return txm.getInstanceKey();
 	}
 
-	public String getApplication() {
-		throw new IllegalStateException();
-	}
-
 }

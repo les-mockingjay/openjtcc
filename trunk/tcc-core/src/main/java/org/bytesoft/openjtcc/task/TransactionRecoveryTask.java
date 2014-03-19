@@ -1,8 +1,8 @@
-package org.bytesoft.openjtcc.work;
+package org.bytesoft.openjtcc.task;
 
 import org.bytesoft.openjtcc.recovery.RecoveryManager;
 
-public class TransactionRecoveryWork extends AbstractScheduleWork {
+public class TransactionRecoveryTask extends AbstractScheduleTask {
 	private static final int MIN_INTERVAL_SECONDS = 5;
 	private static final int MAX_INTERVAL_SECONDS = 1800;
 	private static final int DEFAULT_INTERVAL_SECONDS = 30;

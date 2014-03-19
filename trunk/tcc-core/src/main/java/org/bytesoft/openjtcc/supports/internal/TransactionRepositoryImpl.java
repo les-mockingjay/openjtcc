@@ -14,7 +14,6 @@ public class TransactionRepositoryImpl implements TransactionRepository {
 	private final Map<XidImpl, TransactionImpl> xidToTxMap = new ConcurrentHashMap<XidImpl, TransactionImpl>();
 	private final Map<XidImpl, TransactionImpl> xidToErrTxMap = new ConcurrentHashMap<XidImpl, TransactionImpl>();
 	private final TransactionLoggerImpl transactionLoggerWrapper = new TransactionLoggerImpl();
-	private TransactionLogger transactionLogger;
 
 	public void putTransaction(XidImpl globalXid, TransactionImpl transaction) {
 		this.xidToTxMap.put(globalXid, transaction);
@@ -29,16 +28,15 @@ public class TransactionRepositoryImpl implements TransactionRepository {
 	}
 
 	public TransactionLogger getTransactionLogger() {
-		if (this.transactionLogger == null) {
-			this.transactionLoggerWrapper.setDelegate(TransactionLogger.defaultTransactionLogger);
-		} else {
-			this.transactionLoggerWrapper.setDelegate(this.transactionLogger);
-		}
 		return this.transactionLoggerWrapper;
 	}
 
 	public void setTransactionLogger(TransactionLogger transactionLogger) {
-		this.transactionLogger = transactionLogger;
+		if (transactionLogger == null) {
+			this.transactionLoggerWrapper.setDelegate(TransactionLogger.defaultTransactionLogger);
+		} else {
+			this.transactionLoggerWrapper.setDelegate(transactionLogger);
+		}
 	}
 
 	public void putErrorTransaction(XidImpl globalXid, TransactionImpl transaction) {

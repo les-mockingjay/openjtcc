@@ -1,8 +1,8 @@
-package org.bytesoft.openjtcc.work;
+package org.bytesoft.openjtcc.task;
 
 import org.bytesoft.openjtcc.supports.schedule.TimingProcesser;
 
-public class TransactionTimingWork extends AbstractScheduleWork {
+public class TransactionTimingTask extends AbstractScheduleTask {
 	private static final int MIN_INTERVAL_SECONDS = 1;
 	private static final int MAX_INTERVAL_SECONDS = 1800;
 	private static final int DEFAULT_INTERVAL_SECONDS = 1;

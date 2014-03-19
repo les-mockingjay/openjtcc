@@ -40,6 +40,9 @@ import org.bytesoft.utils.ByteUtils;
 import org.bytesoft.utils.CommonUtils;
 import org.springframework.jdbc.core.support.JdbcDaoSupport;
 
+/**
+ * 不推荐，应优先使用FileTransactionLoggerImpl。
+ */
 public class DbTransactionLoggerImpl extends JdbcDaoSupport implements TransactionLogger {
 	private CompensableMarshaller compensableMarshaller;
 	private ObjectSerializer serializer;
@@ -57,8 +60,8 @@ public class DbTransactionLoggerImpl extends JdbcDaoSupport implements Transacti
 			StringBuilder ber = new StringBuilder();
 			ber.append("insert into tcc_transaction(");
 			ber.append("application, endpoint, global_tx_id, status");
-			ber.append(", status_trace, coordinator, created_time, deleted, bizkey");
-			ber.append(") values (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+			ber.append(", status_trace, coordinator, created_time, deleted");
+			ber.append(") values (?, ?, ?, ?, ?, ?, ?, ?)");
 			stmt = connection.prepareStatement(ber.toString());
 
 			TransactionContext transactionContext = transaction.getTransactionContext();
@@ -76,7 +79,6 @@ public class DbTransactionLoggerImpl extends JdbcDaoSupport implements Transacti
 			stmt.setBoolean(index++, coordinator);
 			stmt.setTimestamp(index++, new Timestamp(transactionContext.getCreatedTime()));
 			stmt.setBoolean(index++, false);
-			// stmt.setString(index++, transactionContext.getBusinessKey());
 
 			stmt.executeUpdate();
 		} catch (Exception ex) {
@@ -256,7 +258,7 @@ public class DbTransactionLoggerImpl extends JdbcDaoSupport implements Transacti
 			connection = this.getConnection();
 
 			StringBuilder ber = new StringBuilder();
-			ber.append("update tcc_transaction set bizkey = ?, status = ?, status_trace = ? ");
+			ber.append("update tcc_transaction set status = ?, status_trace = ? ");
 			ber.append("where application = ? and endpoint = ? and global_tx_id = ?");// and branch_qualifier = ?
 			stmt = connection.prepareStatement(ber.toString());
 
@@ -265,12 +267,11 @@ public class DbTransactionLoggerImpl extends JdbcDaoSupport implements Transacti
 			XidImpl globalXid = transactionContext.getGlobalXid();
 			// boolean coordinator = transactionContext.isCoordinator();
 
-			// stmt.setString(1, transactionContext.getBusinessKey());
-			stmt.setInt(2, transactionStatus.getInnerStatus());
-			stmt.setInt(3, transactionStatus.getInnerStatusTrace());
-			stmt.setString(4, this.instanceKey.getApplication());
-			stmt.setString(5, this.instanceKey.getEndpoint());
-			stmt.setString(6, ByteUtils.byteArrayToString(globalXid.getGlobalTransactionId()));
+			stmt.setInt(1, transactionStatus.getInnerStatus());
+			stmt.setInt(2, transactionStatus.getInnerStatusTrace());
+			stmt.setString(3, this.instanceKey.getApplication());
+			stmt.setString(4, this.instanceKey.getEndpoint());
+			stmt.setString(5, ByteUtils.byteArrayToString(globalXid.getGlobalTransactionId()));
 
 			stmt.executeUpdate();
 		} catch (Exception ex) {
@@ -290,7 +291,7 @@ public class DbTransactionLoggerImpl extends JdbcDaoSupport implements Transacti
 
 			StringBuilder ber = new StringBuilder();
 			ber.append("update tcc_transaction set status = ?, status_trace = ? ");
-			ber.append("where application = ? and endpoint = ? and global_tx_id = ?");// and branch_qualifier = ?
+			ber.append("where application = ? and endpoint = ? and global_tx_id = ?");
 			stmt = connection.prepareStatement(ber.toString());
 
 			TransactionContext transactionContext = transaction.getTransactionContext();
@@ -644,7 +645,7 @@ public class DbTransactionLoggerImpl extends JdbcDaoSupport implements Transacti
 		try {
 			StringBuilder ber = new StringBuilder();
 			ber.append("select global_tx_id, status, status_trace");
-			ber.append(", coordinator, created_time, bizkey ");
+			ber.append(", coordinator, created_time ");
 			ber.append("from tcc_transaction ");
 			ber.append("where application = ? and endpoint = ? and deleted = ?");
 			stmt = connection.prepareStatement(ber.toString());

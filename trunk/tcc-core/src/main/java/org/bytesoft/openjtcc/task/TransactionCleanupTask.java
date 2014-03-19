@@ -1,4 +1,4 @@
-package org.bytesoft.openjtcc.work;
+package org.bytesoft.openjtcc.task;
 
 import java.rmi.RemoteException;
 import java.util.HashSet;
@@ -13,7 +13,7 @@ import org.bytesoft.openjtcc.TransactionImpl;
 import org.bytesoft.openjtcc.TransactionManagerImpl;
 import org.bytesoft.openjtcc.supports.schedule.CleanupProcesser;
 
-public class TransactionCleanupWork implements CleanupProcesser {
+public class TransactionCleanupTask implements Runnable, CleanupProcesser {
 	public static final long SLEEP_UNIT_MILLIS = 100L;
 
 	private boolean released;
