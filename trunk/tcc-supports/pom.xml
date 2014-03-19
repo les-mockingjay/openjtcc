@@ -62,5 +62,11 @@
 			<artifactId>druid</artifactId>
 			<version>1.0.1</version>
 		</dependency>
+
+		<dependency>
+			<groupId>javax.resource</groupId>
+			<artifactId>javax.resource-api</artifactId>
+			<version>1.7</version>
+		</dependency>
 	</dependencies>
 </project>
