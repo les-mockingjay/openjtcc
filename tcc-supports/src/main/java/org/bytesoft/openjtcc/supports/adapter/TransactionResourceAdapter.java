@@ -9,16 +9,15 @@ import javax.resource.spi.BootstrapContext;
 import javax.resource.spi.ResourceAdapter;
 import javax.resource.spi.ResourceAdapterInternalException;
 import javax.resource.spi.endpoint.MessageEndpointFactory;
-import javax.resource.spi.work.Work;
 import javax.resource.spi.work.WorkException;
 import javax.resource.spi.work.WorkListener;
 import javax.resource.spi.work.WorkManager;
 import javax.transaction.xa.XAResource;
 
 import org.bytesoft.openjtcc.recovery.RecoveryManager;
-import org.bytesoft.openjtcc.supports.adapter.work.listener.CleanupWorkListener;
-import org.bytesoft.openjtcc.supports.adapter.work.listener.RecoveryWorkListener;
-import org.bytesoft.openjtcc.supports.adapter.work.listener.TimingWorkListener;
+import org.bytesoft.openjtcc.supports.adapter.work.TransactionCleanupWork;
+import org.bytesoft.openjtcc.supports.adapter.work.TransactionRecoveryWork;
+import org.bytesoft.openjtcc.supports.adapter.work.TransactionTimingWork;
 
 public class TransactionResourceAdapter implements ResourceAdapter {
 	private static final Logger logger = Logger.getLogger("openjtcc");
@@ -28,12 +27,9 @@ public class TransactionResourceAdapter implements ResourceAdapter {
 	private BootstrapContext bootstrapContext;
 	private RecoveryManager recoveryManager;
 
-	private boolean timingCompleted;
-	private boolean recoveryCompleted;
-	private boolean cleanupCompleted;
-	private Work recoveryWork;
-	private Work timingWork;
-	private Work completionWork;
+	private TransactionRecoveryWork recoveryWork;
+	private TransactionTimingWork timingWork;
+	private TransactionCleanupWork cleanupWork;
 
 	public void endpointActivation(MessageEndpointFactory msgEndpointFactory, ActivationSpec activation)
 			throws ResourceException {
@@ -53,31 +49,31 @@ public class TransactionResourceAdapter implements ResourceAdapter {
 		WorkManager workManager = this.bootstrapContext.getWorkManager();
 		boolean recoverySuccess = false;
 		try {
-			WorkListener recoveryListener = new RecoveryWorkListener(this);
+			WorkListener recoveryListener = (WorkListener) this.recoveryWork;
 			workManager.scheduleWork(this.recoveryWork, SECOND_MILLIS, null, recoveryListener);
 			recoverySuccess = true;
 		} catch (WorkException e) {
-			this.recoveryCompleted = true;
+			this.recoveryWork.setCompleted(true);
 			e.printStackTrace();
 		}
 
 		boolean timingSuccess = false;
 		try {
-			WorkListener timingListener = new TimingWorkListener(this);
+			WorkListener timingListener = (WorkListener) this.timingWork;
 			workManager.scheduleWork(this.timingWork, SECOND_MILLIS, null, timingListener);
 			timingSuccess = true;
 		} catch (WorkException e) {
-			this.timingCompleted = true;
+			this.timingWork.setCompleted(true);
 			e.printStackTrace();
 		}
 
 		boolean cleanupSuccess = false;
 		try {
-			WorkListener cleanupListener = new CleanupWorkListener(this);
-			workManager.scheduleWork(this.completionWork, SECOND_MILLIS, null, cleanupListener);
+			WorkListener cleanupListener = (WorkListener) this.cleanupWork;
+			workManager.scheduleWork(this.cleanupWork, SECOND_MILLIS, null, cleanupListener);
 			cleanupSuccess = true;
 		} catch (WorkException e) {
-			this.cleanupCompleted = true;
+			this.cleanupWork.setCompleted(true);
 			e.printStackTrace();
 		}
 
@@ -101,13 +97,14 @@ public class TransactionResourceAdapter implements ResourceAdapter {
 		boolean success = false;
 		this.recoveryWork.release();
 		this.timingWork.release();
-		this.completionWork.release();
+		this.cleanupWork.release();
 
 		long begin = System.currentTimeMillis();
-		boolean executing = !this.recoveryCompleted || !this.timingCompleted || !this.cleanupCompleted;
+		boolean executing = this.recoveryWork.isCompleted() == false || this.timingWork.isCompleted() == false
+				|| this.cleanupWork.isCompleted() == false;
 		while (executing) {
 			this.sleepMillis(SECOND_MILLIS);
-			if (this.recoveryCompleted && this.timingCompleted && this.cleanupCompleted) {
+			if (this.recoveryWork.isCompleted() && this.timingWork.isCompleted() && this.cleanupWork.isCompleted()) {
 				executing = false;
 				success = true;
 			} else if ((System.currentTimeMillis() - begin) > MAX_WAIT_MILLIS) {
@@ -126,56 +123,36 @@ public class TransactionResourceAdapter implements ResourceAdapter {
 		}
 	}
 
-	public boolean isTimingCompleted() {
-		return timingCompleted;
-	}
-
-	public void setTimingCompleted(boolean timingCompleted) {
-		this.timingCompleted = timingCompleted;
-	}
-
-	public boolean isRecoveryCompleted() {
-		return recoveryCompleted;
-	}
-
-	public void setRecoveryCompleted(boolean recoveryCompleted) {
-		this.recoveryCompleted = recoveryCompleted;
-	}
-
-	public boolean isCleanupCompleted() {
-		return cleanupCompleted;
-	}
-
-	public void setCleanupCompleted(boolean cleanupCompleted) {
-		this.cleanupCompleted = cleanupCompleted;
-	}
-
-	public Work getRecoveryWork() {
-		return recoveryWork;
-	}
-
-	public void setRecoveryWork(Work recoveryWork) {
-		this.recoveryWork = recoveryWork;
-	}
-
-	public Work getTimingWork() {
-		return timingWork;
-	}
-
-	public void setTimingWork(Work timingWork) {
-		this.timingWork = timingWork;
-	}
-
-	public Work getCompletionWork() {
-		return completionWork;
-	}
-
-	public void setCompletionWork(Work completionWork) {
-		this.completionWork = completionWork;
+	public RecoveryManager getRecoveryManager() {
+		return recoveryManager;
 	}
 
 	public void setRecoveryManager(RecoveryManager recoveryManager) {
 		this.recoveryManager = recoveryManager;
+	}
+
+	public TransactionRecoveryWork getRecoveryWork() {
+		return recoveryWork;
+	}
+
+	public void setRecoveryWork(TransactionRecoveryWork recoveryWork) {
+		this.recoveryWork = recoveryWork;
+	}
+
+	public TransactionTimingWork getTimingWork() {
+		return timingWork;
+	}
+
+	public void setTimingWork(TransactionTimingWork timingWork) {
+		this.timingWork = timingWork;
+	}
+
+	public TransactionCleanupWork getCleanupWork() {
+		return cleanupWork;
+	}
+
+	public void setCleanupWork(TransactionCleanupWork cleanupWork) {
+		this.cleanupWork = cleanupWork;
 	}
 
 }

@@ -1,6 +1,6 @@
-package org.bytesoft.openjtcc.work;
+package org.bytesoft.openjtcc.task;
 
-public abstract class AbstractScheduleWork implements Runnable {
+public abstract class AbstractScheduleTask implements Runnable {
 	public static final long SECOND_MILLIS = 1000L;
 	public static final long SLEEP_UNIT_MILLIS = 100L;
 
@@ -91,6 +91,6 @@ public abstract class AbstractScheduleWork implements Runnable {
 	public abstract void execute();
 
 	public boolean isActive() {
-		return !this.released;
+		return this.released == false;
 	}
 }

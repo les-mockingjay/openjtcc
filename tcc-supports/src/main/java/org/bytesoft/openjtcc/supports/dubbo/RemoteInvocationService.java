@@ -5,8 +5,6 @@ import org.bytesoft.openjtcc.supports.dubbo.internal.RemoteInvocationResponseImp
 
 public interface RemoteInvocationService {
 
-	public String getApplication();
-
 	public RemoteInvocationResponseImpl invoke(RemoteInvocationRequestImpl request);
 
 }
