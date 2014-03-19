@@ -1,19 +1,19 @@
-package org.bytesoft.openjtcc.supports.adapter.listener;
+package org.bytesoft.openjtcc.supports.adapter.work.listener;
 
 import javax.resource.spi.work.WorkAdapter;
 import javax.resource.spi.work.WorkEvent;
 
 import org.bytesoft.openjtcc.supports.adapter.TransactionResourceAdapter;
 
-public class TransactionTimingWorkListener extends WorkAdapter {
+public class RecoveryWorkListener extends WorkAdapter {
 	private TransactionResourceAdapter resourceAdapter;
 
-	public TransactionTimingWorkListener(TransactionResourceAdapter adapter) {
+	public RecoveryWorkListener(TransactionResourceAdapter adapter) {
 		this.resourceAdapter = adapter;
 	}
 
 	public void workCompleted(WorkEvent event) {
-		this.resourceAdapter.setTimingCompleted(true);
+		this.resourceAdapter.setRecoveryCompleted(true);
 	}
 
 }

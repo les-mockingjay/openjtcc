@@ -13,7 +13,7 @@ import org.bytesoft.openjtcc.remote.Cleanupable;
 import org.bytesoft.openjtcc.remote.RemoteTerminator;
 import org.bytesoft.openjtcc.supports.dubbo.RemoteInvocationService;
 import org.bytesoft.openjtcc.supports.dubbo.RemoteInvocationServiceMarshaller;
-import org.bytesoft.openjtcc.supports.dubbo.common.RemoteInvocationType;
+import org.bytesoft.openjtcc.supports.dubbo.RemoteInvocationType;
 import org.bytesoft.openjtcc.supports.serialize.TerminatorInfo;
 import org.bytesoft.openjtcc.xa.XidFactory;
 import org.bytesoft.openjtcc.xa.XidImpl;

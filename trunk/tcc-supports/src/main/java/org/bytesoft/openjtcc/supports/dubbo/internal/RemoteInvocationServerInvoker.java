@@ -17,9 +17,9 @@ import org.bytesoft.openjtcc.remote.Committable;
 import org.bytesoft.openjtcc.remote.Prepareable;
 import org.bytesoft.openjtcc.remote.RemoteTerminator;
 import org.bytesoft.openjtcc.remote.Rollbackable;
-import org.bytesoft.openjtcc.supports.dubbo.RemoteInvocationInterceptor;
 import org.bytesoft.openjtcc.supports.dubbo.RemoteInvocationService;
-import org.bytesoft.openjtcc.supports.dubbo.common.RemoteInvocationType;
+import org.bytesoft.openjtcc.supports.dubbo.RemoteInvocationType;
+import org.bytesoft.openjtcc.supports.rmi.RemoteInvocationInterceptor;
 import org.bytesoft.openjtcc.supports.spring.bean.beanfactory.NativeBeanFactory;
 
 public class RemoteInvocationServerInvoker implements RemoteInvocationService {

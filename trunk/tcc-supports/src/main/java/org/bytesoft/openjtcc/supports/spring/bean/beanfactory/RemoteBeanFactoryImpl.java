@@ -4,9 +4,9 @@ import java.lang.reflect.Proxy;
 
 import javax.transaction.TransactionManager;
 
-import org.bytesoft.openjtcc.supports.dubbo.RemoteInvocationInterceptor;
 import org.bytesoft.openjtcc.supports.dubbo.RemoteInvocationServiceFactory;
 import org.bytesoft.openjtcc.supports.dubbo.internal.RemoteInvocationClientInvoker;
+import org.bytesoft.openjtcc.supports.rmi.RemoteInvocationInterceptor;
 
 public class RemoteBeanFactoryImpl implements RemoteBeanFactory {
 

@@ -10,6 +10,4 @@ public interface TerminatorMarshaller {
 
 	public RemoteTerminator unmarshallTerminator(TerminatorInfo info) throws IOException;
 
-	// public Terminator unmarshallTerminator(RemoteInvocationResponse response) throws IOException;
-
 }

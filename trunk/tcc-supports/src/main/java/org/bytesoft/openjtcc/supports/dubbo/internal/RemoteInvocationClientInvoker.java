@@ -13,10 +13,10 @@ import org.bytesoft.openjtcc.TransactionImpl;
 import org.bytesoft.openjtcc.TransactionManagerImpl;
 import org.bytesoft.openjtcc.common.TerminalKey;
 import org.bytesoft.openjtcc.common.TransactionContext;
-import org.bytesoft.openjtcc.supports.dubbo.RemoteInvocationInterceptor;
 import org.bytesoft.openjtcc.supports.dubbo.RemoteInvocationService;
 import org.bytesoft.openjtcc.supports.dubbo.RemoteInvocationServiceFactory;
-import org.bytesoft.openjtcc.supports.dubbo.common.RemoteInvocationType;
+import org.bytesoft.openjtcc.supports.dubbo.RemoteInvocationType;
+import org.bytesoft.openjtcc.supports.rmi.RemoteInvocationInterceptor;
 
 public class RemoteInvocationClientInvoker implements InvocationHandler {
 	private String beanId;
