@@ -1,4 +1,4 @@
-package org.bytesoft.openjtcc.supports;
+package org.bytesoft.openjtcc.supports.marshall;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

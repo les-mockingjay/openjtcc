@@ -1,84 +1,62 @@
-package org.bytesoft.openjtcc.supports.adapter;
+package org.bytesoft.openjtcc.supports;
 
+import java.util.concurrent.ExecutorService;
 import java.util.logging.Logger;
-
-import javax.resource.NotSupportedException;
-import javax.resource.ResourceException;
-import javax.resource.spi.ActivationSpec;
-import javax.resource.spi.BootstrapContext;
-import javax.resource.spi.ResourceAdapter;
-import javax.resource.spi.ResourceAdapterInternalException;
-import javax.resource.spi.endpoint.MessageEndpointFactory;
-import javax.resource.spi.work.WorkException;
-import javax.resource.spi.work.WorkListener;
-import javax.resource.spi.work.WorkManager;
-import javax.transaction.xa.XAResource;
 
 import org.bytesoft.openjtcc.recovery.RecoveryManager;
 import org.bytesoft.openjtcc.supports.adapter.work.TransactionCleanupWork;
 import org.bytesoft.openjtcc.supports.adapter.work.TransactionRecoveryWork;
 import org.bytesoft.openjtcc.supports.adapter.work.TransactionTimingWork;
 
-public class TransactionResourceAdapter implements ResourceAdapter {
+/**
+ * 不推荐。优先使用TransactionResourceAdapter。
+ */
+public class TransactionExecutionDeamon {
 	private static final Logger logger = Logger.getLogger("openjtcc");
 	private static final long SECOND_MILLIS = 1000L;
 	private static final long MAX_WAIT_MILLIS = SECOND_MILLIS * 30;
 
-	private BootstrapContext bootstrapContext;
+	private ExecutorService executorService;
+
 	private RecoveryManager recoveryManager;
 
 	private TransactionRecoveryWork recoveryWork;
 	private TransactionTimingWork timingWork;
 	private TransactionCleanupWork cleanupWork;
 
-	public void endpointActivation(MessageEndpointFactory msgEndpointFactory, ActivationSpec activation)
-			throws ResourceException {
-	}
-
-	public void endpointDeactivation(MessageEndpointFactory msgEndpointFactory, ActivationSpec activation) {
-	}
-
-	public XAResource[] getXAResources(ActivationSpec[] activation) throws ResourceException {
-		throw new NotSupportedException();
-	}
-
-	public void start(BootstrapContext context) throws ResourceAdapterInternalException {
-		this.bootstrapContext = context;
+	public void start() throws IllegalStateException {
 		this.recoveryManager.reconstruct();
 
-		WorkManager workManager = this.bootstrapContext.getWorkManager();
 		boolean recoverySuccess = false;
+
 		try {
-			WorkListener recoveryListener = (WorkListener) this.recoveryWork;
-			workManager.startWork(this.recoveryWork, 0, null, recoveryListener);
+			this.executorService.submit(this.recoveryWork);
 			recoverySuccess = true;
-		} catch (WorkException ex) {
+		} catch (RuntimeException ex) {
 			this.recoveryWork.setCompleted(true);
 			ex.printStackTrace();
 		}
 
 		boolean timingSuccess = false;
 		try {
-			WorkListener timingListener = (WorkListener) this.timingWork;
-			workManager.startWork(this.timingWork, 0, null, timingListener);
+			this.executorService.submit(this.timingWork);
 			timingSuccess = true;
-		} catch (WorkException ex) {
+		} catch (RuntimeException ex) {
 			this.timingWork.setCompleted(true);
 			ex.printStackTrace();
 		}
 
 		boolean cleanupSuccess = false;
 		try {
-			WorkListener cleanupListener = (WorkListener) this.cleanupWork;
-			workManager.startWork(this.cleanupWork, 0, null, cleanupListener);
+			this.executorService.submit(this.cleanupWork);
 			cleanupSuccess = true;
-		} catch (WorkException ex) {
+		} catch (RuntimeException ex) {
 			this.cleanupWork.setCompleted(true);
 			ex.printStackTrace();
 		}
 
 		if ((recoverySuccess && timingSuccess && cleanupSuccess) == false) {
-			throw new ResourceAdapterInternalException();
+			throw new IllegalStateException();
 		}
 		logger.info("[ResourceAdapter] start successful");
 	}
@@ -153,6 +131,10 @@ public class TransactionResourceAdapter implements ResourceAdapter {
 
 	public void setCleanupWork(TransactionCleanupWork cleanupWork) {
 		this.cleanupWork = cleanupWork;
+	}
+
+	public void setExecutorService(ExecutorService executorService) {
+		this.executorService = executorService;
 	}
 
 }
