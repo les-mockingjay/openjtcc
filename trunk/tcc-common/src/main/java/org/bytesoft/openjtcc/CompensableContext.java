@@ -2,19 +2,18 @@ package org.bytesoft.openjtcc;
 
 import java.io.Serializable;
 
-/**
- * @author yangming.liu
- */
 public interface CompensableContext<T extends Serializable> {
-	public T getCompensableVariable();
+
+	public T getCompensableVariable() throws IllegalStateException;
 
 	public void setCompensableVariable(T variable) throws IllegalStateException;
 
 	public void setRollbackOnly() throws IllegalStateException;
 
-	public boolean isRollbackOnly();
+	public boolean isRollbackOnly() throws IllegalStateException;
 
-	public String getGlobalTransactionId();
+	public String getGlobalTransactionId() throws IllegalStateException;
 
-	public boolean isGlobalCoordinator();
+	public boolean isCoordinator() throws IllegalStateException;
+
 }

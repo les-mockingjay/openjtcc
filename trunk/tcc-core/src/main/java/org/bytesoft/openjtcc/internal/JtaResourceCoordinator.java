@@ -17,7 +17,7 @@ import org.bytesoft.openjtcc.common.TransactionContext;
 import org.bytesoft.openjtcc.xa.XidFactory;
 import org.bytesoft.openjtcc.xa.XidImpl;
 
-public class ResourceCoordinator {
+public class JtaResourceCoordinator {
 	private static final Logger logger = Logger.getLogger("openjtcc");
 
 	private transient final Set<XAResourceArchive> enlistedXAResources = new HashSet<XAResourceArchive>();

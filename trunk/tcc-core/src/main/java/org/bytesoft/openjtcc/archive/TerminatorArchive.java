@@ -1,6 +1,6 @@
 package org.bytesoft.openjtcc.archive;
 
-import org.bytesoft.openjtcc.resource.RemoteTerminator;
+import org.bytesoft.openjtcc.remote.RemoteTerminator;
 import org.bytesoft.utils.CommonUtils;
 
 public class TerminatorArchive {
@@ -19,7 +19,7 @@ public class TerminatorArchive {
 	public boolean equals(Object obj) {
 		if (obj == null) {
 			return false;
-		} else if (!this.getClass().equals(obj.getClass())) {
+		} else if (this.getClass().equals(obj.getClass()) == false) {
 			return false;
 		}
 		TerminatorArchive that = (TerminatorArchive) obj;

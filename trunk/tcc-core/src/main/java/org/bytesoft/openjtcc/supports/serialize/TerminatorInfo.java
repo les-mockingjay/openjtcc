@@ -49,7 +49,7 @@ public class TerminatorInfo implements Serializable {
 	public boolean equals(Object obj) {
 		if (obj == null) {
 			return false;
-		} else if (!TerminatorInfo.class.isInstance(obj)) {
+		} else if (TerminatorInfo.class.isInstance(obj) == false) {
 			return false;
 		}
 		TerminatorInfo that = (TerminatorInfo) obj;

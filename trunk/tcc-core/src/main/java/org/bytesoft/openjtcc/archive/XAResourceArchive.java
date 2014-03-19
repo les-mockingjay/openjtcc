@@ -16,7 +16,9 @@ public class XAResourceArchive {
 	}
 
 	public boolean equals(Object obj) {
-		if (XAResourceArchive.class.isInstance(obj) == false) {
+		if (obj == null) {
+			return false;
+		} else if (XAResourceArchive.class.isInstance(obj) == false) {
 			return false;
 		}
 		XAResourceArchive that = (XAResourceArchive) obj;

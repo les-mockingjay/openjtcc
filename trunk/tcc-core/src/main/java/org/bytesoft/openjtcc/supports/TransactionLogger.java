@@ -62,11 +62,6 @@ public interface TransactionLogger {
 		private static final NullTransactionLoggerHanlder instance = new NullTransactionLoggerHanlder();
 
 		public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-			// logger.info(String.format("%4s[transaction-log] %s", "", method.getName()));
-			// synchronized (Object.class) {
-			// System.err.printf("%4s[transaction-log] %s%n", "", method.getName());
-			// System.err.flush();
-			// }
 			Class<?> clazz = method.getReturnType();
 			if (Void.TYPE.equals(clazz)) {
 				return null;

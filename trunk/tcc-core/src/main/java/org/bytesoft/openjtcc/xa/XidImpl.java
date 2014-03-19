@@ -72,9 +72,9 @@ public class XidImpl implements Xid, Serializable {
 		XidImpl other = (XidImpl) obj;
 		if (formatId != other.formatId) {
 			return false;
-		} else if (!Arrays.equals(branchQualifier, other.branchQualifier)) {
+		} else if (Arrays.equals(branchQualifier, other.branchQualifier) == false) {
 			return false;
-		} else if (!Arrays.equals(globalTransactionId, other.globalTransactionId)) {
+		} else if (Arrays.equals(globalTransactionId, other.globalTransactionId) == false) {
 			return false;
 		}
 		return true;

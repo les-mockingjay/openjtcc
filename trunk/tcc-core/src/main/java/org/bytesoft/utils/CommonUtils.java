@@ -16,7 +16,7 @@ public class CommonUtils {
 			return true;
 		} else if (o1 == null || o2 == null) {
 			return false;
-		} else if (!o1.getClass().equals(o2.getClass())) {
+		} else if (o1.getClass().equals(o2.getClass()) == false) {
 			return false;
 		}
 		return o1.equals(o2);

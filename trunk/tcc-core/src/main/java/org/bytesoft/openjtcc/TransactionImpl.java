@@ -21,11 +21,13 @@ import javax.transaction.xa.XAResource;
 import org.bytesoft.openjtcc.archive.CompensableArchive;
 import org.bytesoft.openjtcc.archive.TerminatorArchive;
 import org.bytesoft.openjtcc.archive.TransactionArchive;
+import org.bytesoft.openjtcc.common.TerminalKey;
 import org.bytesoft.openjtcc.common.TransactionContext;
 import org.bytesoft.openjtcc.common.TransactionStatus;
 import org.bytesoft.openjtcc.internal.CompensableContextImpl;
 import org.bytesoft.openjtcc.internal.JtaTransactionImpl;
-import org.bytesoft.openjtcc.resource.RemoteTerminator;
+import org.bytesoft.openjtcc.remote.RemoteTerminator;
+import org.bytesoft.openjtcc.supports.AbstractSynchronization;
 import org.bytesoft.openjtcc.supports.TransactionLogger;
 import org.bytesoft.openjtcc.supports.TransactionStatistic;
 import org.bytesoft.openjtcc.xa.XidImpl;
@@ -37,7 +39,7 @@ public class TransactionImpl extends TransactionArchive implements Transaction {
 	private final TerminatorSkeleton terminatorSkeleton = new TerminatorSkeleton();
 	private final CompensableContextImpl<Serializable> compensableContext = new CompensableContextImpl<Serializable>();
 	private final Map<XidImpl, JtaTransactionImpl> internalTxnMap = new ConcurrentHashMap<XidImpl, JtaTransactionImpl>();
-	private final Set<AbstractCustomSynchronization> synchronizations = new HashSet<AbstractCustomSynchronization>();
+	private final Set<AbstractSynchronization> synchronizations = new HashSet<AbstractSynchronization>();
 
 	private TransactionLogger transactionLogger;
 	private TransactionManagerImpl transactionManager;
@@ -386,7 +388,7 @@ public class TransactionImpl extends TransactionArchive implements Transaction {
 	public synchronized void timingRollback() throws HeuristicMixedException, SystemException {
 
 		boolean firstCompletion = false;
-		if (!this.transactionCompleting
+		if (this.transactionCompleting == false
 				&& (this.transactionStatus.isActive() || this.transactionStatus.isMarkedRollbackOnly())) {
 			firstCompletion = true;
 			this.transactionCompleting = true;
@@ -679,7 +681,7 @@ public class TransactionImpl extends TransactionArchive implements Transaction {
 				confirmRequired = false;
 			} else if (launchHolder.cancelled && launchHolder.rolledback) {
 				confirmRequired = true;
-			} else if (!launchHolder.tryCommitted && launchHolder.variable == null) {
+			} else if (launchHolder.tryCommitted == false && launchHolder.variable == null) {
 				confirmRequired = false;
 			}
 
@@ -728,7 +730,7 @@ public class TransactionImpl extends TransactionArchive implements Transaction {
 				confirmRequired = false;
 			} else if (holder.cancelled && holder.rolledback) {
 				confirmRequired = true;
-			} else if (!holder.tryCommitted && holder.variable == null) {
+			} else if (holder.tryCommitted == false && holder.variable == null) {
 				confirmRequired = false;
 			}
 
@@ -823,7 +825,7 @@ public class TransactionImpl extends TransactionArchive implements Transaction {
 				cancelRequired = false;
 			} else if (launchHolder.cancelled && launchHolder.rolledback) {
 				cancelRequired = true;
-			} else if (!launchHolder.tryCommitted && launchHolder.variable == null) {
+			} else if (launchHolder.tryCommitted == false && launchHolder.variable == null) {
 				cancelRequired = false;
 			}
 
@@ -872,7 +874,7 @@ public class TransactionImpl extends TransactionArchive implements Transaction {
 				cancelRequired = false;
 			} else if (holder.cancelled && holder.rolledback) {
 				cancelRequired = true;
-			} else if (!holder.tryCommitted && holder.variable == null) {
+			} else if (holder.tryCommitted == false && holder.variable == null) {
 				cancelRequired = false;
 			}
 
@@ -1031,7 +1033,8 @@ public class TransactionImpl extends TransactionArchive implements Transaction {
 
 	public synchronized boolean registerTerminator(RemoteTerminator terminator) throws IllegalStateException,
 			SystemException {
-		String application = terminator.getApplication();
+		TerminalKey terminalKey = terminator.getTerminalKey();
+		String application = terminalKey.getApplication();
 		TerminatorArchive holder = this.appToTerminatorMap.get(application);
 		if (holder == null) {
 			holder = new TerminatorArchive();
@@ -1047,7 +1050,8 @@ public class TransactionImpl extends TransactionArchive implements Transaction {
 		if (terminator == null) {
 			return null;
 		} else {
-			return terminator.getEndpoint();
+			TerminalKey terminalKey = terminator.getTerminalKey();
+			return terminalKey.getEndpoint();
 		}
 	}
 
@@ -1092,8 +1096,8 @@ public class TransactionImpl extends TransactionArchive implements Transaction {
 
 	public synchronized void registerSynchronization(Synchronization sync) throws IllegalStateException,
 			RollbackException, SystemException {
-		if (AbstractCustomSynchronization.class.isInstance(sync)) {
-			AbstractCustomSynchronization synchronization = (AbstractCustomSynchronization) sync;
+		if (AbstractSynchronization.class.isInstance(sync)) {
+			AbstractSynchronization synchronization = (AbstractSynchronization) sync;
 			this.synchronizations.add(synchronization);
 		} else {
 			throw new IllegalStateException();
@@ -1101,9 +1105,9 @@ public class TransactionImpl extends TransactionArchive implements Transaction {
 	}
 
 	public synchronized void beforeCompletion() {
-		Iterator<AbstractCustomSynchronization> itr = this.synchronizations.iterator();
+		Iterator<AbstractSynchronization> itr = this.synchronizations.iterator();
 		while (itr.hasNext()) {
-			AbstractCustomSynchronization sync = itr.next();
+			AbstractSynchronization sync = itr.next();
 			try {
 				sync.beforeCompletion();
 			} catch (RuntimeException ex) {
@@ -1113,9 +1117,9 @@ public class TransactionImpl extends TransactionArchive implements Transaction {
 	}
 
 	public synchronized void afterCompletion() {
-		Iterator<AbstractCustomSynchronization> itr = this.synchronizations.iterator();
+		Iterator<AbstractSynchronization> itr = this.synchronizations.iterator();
 		while (itr.hasNext()) {
-			AbstractCustomSynchronization sync = itr.next();
+			AbstractSynchronization sync = itr.next();
 			try {
 				sync.afterCompletion(this.transactionStatus.getTransactionStatus());
 			} catch (RuntimeException ex) {
@@ -1218,7 +1222,7 @@ public class TransactionImpl extends TransactionArchive implements Transaction {
 	public boolean equals(Object obj) {
 		if (obj == null) {
 			return false;
-		} else if (!this.getClass().equals(obj.getClass())) {
+		} else if (this.getClass().equals(obj.getClass()) == false) {
 			return false;
 		}
 		TransactionImpl that = (TransactionImpl) obj;
@@ -1251,8 +1255,7 @@ public class TransactionImpl extends TransactionArchive implements Transaction {
 				transaction.setTransactionCompleting(true);
 
 				TransactionStatus transactionStatus = transaction.getTransactionStatus();
-				if (!TransactionImpl.class.equals(transaction.getClass())) {
-					// RecoveredTransactionImpl
+				if (TransactionImpl.class.equals(transaction.getClass()) == false) {
 					throw new SystemException();
 				} else if (transactionStatus.isActive() || transactionStatus.isMarkedRollbackOnly()) {
 					transactionStatus.setStatusPreparing();
@@ -1400,54 +1403,10 @@ public class TransactionImpl extends TransactionArchive implements Transaction {
 			}
 		}
 
-		public String getApplication() {
+		public TerminalKey getTerminalKey() {
 			throw new IllegalStateException();
 		}
 
-		public String getEndpoint() {
-			throw new IllegalStateException();
-		}
-
-	}
-
-	public static abstract class AbstractCustomSynchronization implements Synchronization {
-		private XidImpl xid;
-		private boolean beforeCompletionRequired;
-		private boolean afterCompletionRequired;
-
-		public AbstractCustomSynchronization() {
-			this(null);
-		}
-
-		public AbstractCustomSynchronization(XidImpl xid) {
-			this.xid = xid;
-			this.beforeCompletionRequired = true;
-			this.afterCompletionRequired = true;
-		}
-
-		public final void beforeCompletion() {
-			if (this.beforeCompletionRequired) {
-				this.beforeCompletionRequired = false;
-				this.beforeCompletion(this.xid);
-			}
-		}
-
-		public final void afterCompletion(int status) {
-			if (this.afterCompletionRequired) {
-				this.afterCompletionRequired = false;
-				this.afterCompletion(this.xid, status);
-			}
-		}
-
-		public abstract void afterCreation(XidImpl xid);
-
-		public abstract void beforeCompletion(XidImpl xid);
-
-		public abstract void afterCompletion(XidImpl xid, int status);
-
-		public void setXid(XidImpl xid) {
-			this.xid = xid;
-		}
 	}
 
 }

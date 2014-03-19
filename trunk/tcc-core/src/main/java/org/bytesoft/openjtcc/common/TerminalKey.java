@@ -1,10 +1,10 @@
-package org.bytesoft.openjtcc.internal;
+package org.bytesoft.openjtcc.common;
 
 import java.io.Serializable;
 
 import org.bytesoft.utils.CommonUtils;
 
-public class ManagedKey implements Cloneable, Serializable {
+public class TerminalKey implements Cloneable, Serializable {
 	private static final long serialVersionUID = 1L;
 
 	private String application = "unspecified";
@@ -26,8 +26,8 @@ public class ManagedKey implements Cloneable, Serializable {
 		this.endpoint = endpoint;
 	}
 
-	public ManagedKey clone() throws CloneNotSupportedException {
-		ManagedKey that = new ManagedKey();
+	public TerminalKey clone() throws CloneNotSupportedException {
+		TerminalKey that = new TerminalKey();
 		that.setApplication(this.application);
 		that.setEndpoint(this.endpoint);
 		return that;
@@ -43,11 +43,11 @@ public class ManagedKey implements Cloneable, Serializable {
 	public boolean equals(Object obj) {
 		if (obj == null) {
 			return false;
-		} else if (ManagedKey.class.equals(obj.getClass()) == false) {
+		} else if (TerminalKey.class.equals(obj.getClass()) == false) {
 			return false;
 		}
 
-		ManagedKey that = (ManagedKey) obj;
+		TerminalKey that = (TerminalKey) obj;
 		boolean appEquals = CommonUtils.equals(this.application, that.application);
 		boolean endEquals = CommonUtils.equals(this.endpoint, that.endpoint);
 		return appEquals && endEquals;
