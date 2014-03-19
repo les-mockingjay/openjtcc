@@ -2,7 +2,6 @@ package org.bytesoft.openjtcc.common;
 
 import java.io.Serializable;
 
-import org.bytesoft.openjtcc.internal.ManagedKey;
 import org.bytesoft.openjtcc.xa.XidImpl;
 
 public class TransactionContext implements Serializable, Cloneable {
@@ -13,21 +12,12 @@ public class TransactionContext implements Serializable, Cloneable {
 
 	private XidImpl globalXid;
 	private XidImpl branchXid;
-	private ManagedKey instanceKey;
+	private TerminalKey instanceKey;
 	private long createdTime;
 	private long expiredTime;
 	private boolean compensable;
 
 	public TransactionContext() {
-	}
-
-	public XidImpl createBranchXid() {
-		// TransactionConfig config = new TransactionConfig();
-		// config.setApplication(this.application);
-		// config.setEndpoint(this.endpoint);
-		// XidImpl globalXid = this.getGlobalXid();
-		// return XidFactory.createBranchXid(config, globalXid);
-		return null;
 	}
 
 	public XidImpl getBranchXid() {
@@ -90,11 +80,11 @@ public class TransactionContext implements Serializable, Cloneable {
 		this.recovery = recovery;
 	}
 
-	public ManagedKey getInstanceKey() {
+	public TerminalKey getInstanceKey() {
 		return instanceKey;
 	}
 
-	public void setInstanceKey(ManagedKey instanceKey) {
+	public void setInstanceKey(TerminalKey instanceKey) {
 		this.instanceKey = instanceKey;
 	}
 

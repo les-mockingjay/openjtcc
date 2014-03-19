@@ -22,7 +22,7 @@ public class CompensableContextImpl<T extends Serializable> implements Compensab
 		return this.compensableVariable;
 	}
 
-	public boolean isGlobalCoordinator() {
+	public boolean isCoordinator() {
 		if (transactionContext.isCoordinator()) {
 			XidImpl globalXid = this.transactionContext.getGlobalXid();
 			XidImpl branchXid = this.transactionContext.getBranchXid();

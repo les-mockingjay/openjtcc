@@ -1,8 +1,5 @@
 package org.bytesoft.openjtcc;
 
-/**
- * @author yangming.liu
- */
 public class CompensableException extends RuntimeException {
 	private static final long serialVersionUID = 1L;
 

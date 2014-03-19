@@ -26,7 +26,7 @@ public class CompensableArchive {
 	public boolean equals(Object obj) {
 		if (obj == null) {
 			return false;
-		} else if (!this.getClass().equals(obj.getClass())) {
+		} else if (this.getClass().equals(obj.getClass()) == false) {
 			return false;
 		}
 		CompensableArchive that = (CompensableArchive) obj;

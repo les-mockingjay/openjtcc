@@ -17,12 +17,12 @@ import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
-import org.bytesoft.openjtcc.TransactionImpl.AbstractCustomSynchronization;
+import org.bytesoft.openjtcc.common.TerminalKey;
 import org.bytesoft.openjtcc.common.TransactionContext;
 import org.bytesoft.openjtcc.common.TransactionStatus;
 import org.bytesoft.openjtcc.internal.AssociatedContext;
-import org.bytesoft.openjtcc.internal.ManagedKey;
 import org.bytesoft.openjtcc.internal.JtaTransactionImpl;
+import org.bytesoft.openjtcc.supports.AbstractSynchronization;
 import org.bytesoft.openjtcc.supports.TransactionLogger;
 import org.bytesoft.openjtcc.supports.TransactionRepository;
 import org.bytesoft.openjtcc.supports.TransactionStatistic;
@@ -35,17 +35,18 @@ import org.bytesoft.utils.ByteUtils;
 public class TransactionManagerImpl implements TransactionManager, TimingProcesser {
 	private static final Logger logger = Logger.getLogger("openjtcc");
 
-	private ManagedKey instanceKey;
 	private XidFactory xidFactory;
+	private TerminalKey instanceKey;
+
 	private final Map<Thread, AssociatedContext> threadToTxnMap = new ConcurrentHashMap<Thread, AssociatedContext>();
-	private final Map<Thread, AbstractCustomSynchronization> threadToSynMap = new ConcurrentHashMap<Thread, AbstractCustomSynchronization>();
+	private final Map<Thread, AbstractSynchronization> threadToSynMap = new ConcurrentHashMap<Thread, AbstractSynchronization>();
 	private final Set<AssociatedContext> expiredTransactionSet = new HashSet<AssociatedContext>();
 
 	private TransactionStatistic transactionStatistic;
 	private CleanupProcesser cleanupProcesser;
 	private TransactionRepository transactionRepository;
 
-	private int transactionTimeout = 5 * 60;// TransactionConstants.DEFAULT_TX_TIMEOUT_SECONDS;
+	private int transactionTimeout = 5 * 60;
 
 	public TransactionImpl begin(TransactionContext transactionContext) throws NotSupportedException, SystemException {
 		if (this.getCurrentTransaction() != null) {
@@ -108,8 +109,8 @@ public class TransactionManagerImpl implements TransactionManager, TimingProcess
 			internal = global.associateInternalTransaction();
 			logger.info(String.format("[begin-native] global: %s, inner: %s", global, internal));
 
-			if (!global.isTransactionCompleting()) {
-				AbstractCustomSynchronization sync = this.threadToSynMap.get(Thread.currentThread());
+			if (global.isTransactionCompleting() == false) {
+				AbstractSynchronization sync = this.threadToSynMap.get(Thread.currentThread());
 				if (sync != null) {
 					try {
 						TransactionContext transactionContext = global.getTransactionContext();
@@ -161,7 +162,7 @@ public class TransactionManagerImpl implements TransactionManager, TimingProcess
 		TransactionLogger transactionLogger = this.transactionRepository.getTransactionLogger();
 		transactionLogger.beginTransaction(transaction);
 
-		AbstractCustomSynchronization sync = this.threadToSynMap.get(Thread.currentThread());
+		AbstractSynchronization sync = this.threadToSynMap.get(Thread.currentThread());
 		if (sync != null) {
 			try {
 				sync.afterCreation(transactionContext.getBranchXid());
@@ -409,12 +410,12 @@ public class TransactionManagerImpl implements TransactionManager, TimingProcess
 		return transaction;
 	}
 
-	public synchronized void registerSynchronization(AbstractCustomSynchronization synchronization) {
+	public synchronized void registerSynchronization(AbstractSynchronization synchronization) {
 		this.threadToSynMap.put(Thread.currentThread(), synchronization);
 	}
 
-	public synchronized void unRegisterSynchronization(AbstractCustomSynchronization synchronization) {
-		AbstractCustomSynchronization sync = this.threadToSynMap.get(Thread.currentThread());
+	public synchronized void unRegisterSynchronization(AbstractSynchronization synchronization) {
+		AbstractSynchronization sync = this.threadToSynMap.get(Thread.currentThread());
 		if (synchronization.equals(sync)) {
 			this.threadToSynMap.remove(Thread.currentThread());
 		}
@@ -561,11 +562,11 @@ public class TransactionManagerImpl implements TransactionManager, TimingProcess
 		this.transactionStatistic = transactionStatistic;
 	}
 
-	public ManagedKey getInstanceKey() {
+	public TerminalKey getInstanceKey() {
 		return instanceKey;
 	}
 
-	public void setInstanceKey(ManagedKey instanceKey) {
+	public void setInstanceKey(TerminalKey instanceKey) {
 		this.instanceKey = instanceKey;
 	}
 

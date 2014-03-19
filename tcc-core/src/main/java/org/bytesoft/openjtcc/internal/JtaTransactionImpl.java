@@ -23,12 +23,12 @@ import org.bytesoft.utils.CommonUtils;
 
 public class JtaTransactionImpl implements Transaction {
 	private static final Logger logger = Logger.getLogger("openjtcc");
-	private transient final Set<SynchronizationImpl> synchronizations = new HashSet<SynchronizationImpl>();
+	private transient final Set<JtaSynchronizationImpl> synchronizations = new HashSet<JtaSynchronizationImpl>();
 
 	private TransactionStatus transactionStatus = new TransactionStatus();
 	private boolean markedRollbackOnly = false;
 	private final transient TransactionContext transactionContext;
-	private transient ResourceCoordinator resourceCoordinator;
+	private transient JtaResourceCoordinator resourceCoordinator;
 	private transient XidFactory xidFactory;
 
 	public JtaTransactionImpl(TransactionContext context) {
@@ -41,16 +41,16 @@ public class JtaTransactionImpl implements Transaction {
 	}
 
 	public void initialize() {
-		ResourceCoordinator rc = new ResourceCoordinator();
+		JtaResourceCoordinator rc = new JtaResourceCoordinator();
 		rc.setTransactionContext(this.transactionContext);
 		rc.setXidFactory(this.xidFactory);
 		this.resourceCoordinator = rc;
 	}
 
 	private void beforeCompletion() {
-		Iterator<SynchronizationImpl> itr = this.synchronizations.iterator();
+		Iterator<JtaSynchronizationImpl> itr = this.synchronizations.iterator();
 		while (itr.hasNext()) {
-			SynchronizationImpl sync = itr.next();
+			JtaSynchronizationImpl sync = itr.next();
 			try {
 				sync.beforeCompletion();
 			} catch (Exception ex) {
@@ -62,9 +62,9 @@ public class JtaTransactionImpl implements Transaction {
 
 	private void afterCompletion() {
 		int status = this.transactionStatus.getTransactionStatus();
-		Iterator<SynchronizationImpl> itr = this.synchronizations.iterator();
+		Iterator<JtaSynchronizationImpl> itr = this.synchronizations.iterator();
 		while (itr.hasNext()) {
-			SynchronizationImpl sync = itr.next();
+			JtaSynchronizationImpl sync = itr.next();
 			try {
 				sync.afterCompletion(status);
 			} catch (Exception ex) {
@@ -161,10 +161,10 @@ public class JtaTransactionImpl implements Transaction {
 			throw new SystemException("Synchronization cannot be null!");
 		} else if (this.markedRollbackOnly) {
 			throw new RollbackException();
-		} else if (!this.transactionStatus.isActive()) {
+		} else if (this.transactionStatus.isActive() == false) {
 			throw new IllegalStateException();
 		}
-		this.synchronizations.add(new SynchronizationImpl(this.transactionContext.getGlobalXid(), sync));
+		this.synchronizations.add(new JtaSynchronizationImpl(this.transactionContext.getGlobalXid(), sync));
 	}
 
 	public synchronized void rollback() throws IllegalStateException, SystemException {
@@ -211,7 +211,7 @@ public class JtaTransactionImpl implements Transaction {
 	public boolean equals(Object obj) {
 		if (obj == null) {
 			return false;
-		} else if (!this.getClass().equals(obj.getClass())) {
+		} else if (this.getClass().equals(obj.getClass()) == false) {
 			return false;
 		}
 		JtaTransactionImpl that = (JtaTransactionImpl) obj;
@@ -224,38 +224,6 @@ public class JtaTransactionImpl implements Transaction {
 	public String toString() {
 		return String.format("InternalTransactionImpl[xid: %s, status: %s]", this.transactionContext.getGlobalXid(),
 				this.transactionStatus.getStatusCode());
-	}
-
-	public static class SynchronizationImpl implements Synchronization {
-		public XidImpl globalXid;
-		public Synchronization synchronization;
-		public boolean beforeCompletionRequired;
-		public boolean afterCompletionRequired;
-
-		public SynchronizationImpl(XidImpl globalXid, Synchronization sync) {
-			if (sync == null) {
-				throw new IllegalStateException();
-			} else {
-				this.globalXid = globalXid;
-				this.synchronization = sync;
-				this.beforeCompletionRequired = true;
-				this.afterCompletionRequired = true;
-			}
-		}
-
-		public void afterCompletion(int status) {
-			if (this.afterCompletionRequired) {
-				this.afterCompletionRequired = false;
-				this.synchronization.afterCompletion(status);
-			}
-		}
-
-		public void beforeCompletion() {
-			if (this.beforeCompletionRequired) {
-				this.beforeCompletionRequired = false;
-				this.synchronization.beforeCompletion();
-			}
-		}
 	}
 
 }

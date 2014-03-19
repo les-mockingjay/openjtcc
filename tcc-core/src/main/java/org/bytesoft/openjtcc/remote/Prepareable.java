@@ -1,4 +1,4 @@
-package org.bytesoft.openjtcc.resource;
+package org.bytesoft.openjtcc.remote;
 
 import java.rmi.RemoteException;
 

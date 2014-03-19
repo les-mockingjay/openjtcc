@@ -2,7 +2,7 @@ package org.bytesoft.openjtcc.supports.serialize;
 
 import java.io.IOException;
 
-import org.bytesoft.openjtcc.resource.RemoteTerminator;
+import org.bytesoft.openjtcc.remote.RemoteTerminator;
 
 public interface TerminatorMarshaller {
 
