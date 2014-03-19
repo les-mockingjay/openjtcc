@@ -2,8 +2,8 @@ package org.bytesoft.openjtcc.supports.dubbo.internal;
 
 import java.io.Serializable;
 
-import org.bytesoft.openjtcc.supports.dubbo.RemoteInvocationRequest;
-import org.bytesoft.openjtcc.supports.dubbo.common.RemoteInvocationType;
+import org.bytesoft.openjtcc.supports.dubbo.RemoteInvocationType;
+import org.bytesoft.openjtcc.supports.rmi.RemoteInvocationRequest;
 
 public class RemoteInvocationRequestImpl implements RemoteInvocationRequest, Serializable {
 	private static final long serialVersionUID = 1L;

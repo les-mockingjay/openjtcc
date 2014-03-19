@@ -25,7 +25,7 @@ import org.bytesoft.openjtcc.supports.TransactionStatistic;
 import org.bytesoft.openjtcc.xa.XidImpl;
 
 public class RecoveryManager {
-	// private static final Logger logger = Logger.getLogger("lemon-jta");
+
 	private TransactionManager transactionManager;
 	private TransactionStatistic transactionStatistic;
 

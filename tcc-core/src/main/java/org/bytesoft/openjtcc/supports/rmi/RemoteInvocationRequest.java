@@ -1,6 +1,6 @@
-package org.bytesoft.openjtcc.supports.dubbo;
+package org.bytesoft.openjtcc.supports.rmi;
 
-public interface RemoteInvocationResponse {
+public interface RemoteInvocationRequest {
 
 	public Object getTransactionContext();
 

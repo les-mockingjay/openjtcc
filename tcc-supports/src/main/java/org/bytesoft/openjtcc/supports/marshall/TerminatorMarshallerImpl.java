@@ -30,24 +30,6 @@ public class TerminatorMarshallerImpl implements TerminatorMarshaller, RemoteInv
 		return null;
 	}
 
-	// @Override
-	// public RemoteTerminator unmarshallTerminator(RemoteInvocationResponse res) throws IOException {
-	// if (RemoteInvocationResponseImpl.class.isInstance(res)) {
-	// RemoteInvocationResponseImpl response = (RemoteInvocationResponseImpl) res;
-	//
-	// TransactionContext transactionContext = (TransactionContext) response.getTransactionContext();
-	// XidImpl branchXid = transactionContext.getBranchXid();
-	//
-	// TerminatorInfo info = new TerminatorInfo();
-	// info.setApplication(response.getApplication());
-	// info.setEndpoint(response.getEndpoint());
-	// info.setBranchXid(branchXid);
-	//
-	// return this.unmarshallTerminator(info);
-	// }
-	// return null;
-	// }
-
 	@Override
 	public RemoteTerminator unmarshallTerminator(TerminatorInfo info) throws IOException {
 		RemoteTerminatorHandler handler = new RemoteTerminatorHandler();

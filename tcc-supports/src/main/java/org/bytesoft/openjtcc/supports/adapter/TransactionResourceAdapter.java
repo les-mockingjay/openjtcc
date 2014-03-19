@@ -16,12 +16,12 @@ import javax.resource.spi.work.WorkManager;
 import javax.transaction.xa.XAResource;
 
 import org.bytesoft.openjtcc.recovery.RecoveryManager;
-import org.bytesoft.openjtcc.supports.adapter.listener.TransactionCompletionWorkListener;
-import org.bytesoft.openjtcc.supports.adapter.listener.TransactionRecoveryWorkListener;
-import org.bytesoft.openjtcc.supports.adapter.listener.TransactionTimingWorkListener;
+import org.bytesoft.openjtcc.supports.adapter.work.listener.CleanupWorkListener;
+import org.bytesoft.openjtcc.supports.adapter.work.listener.RecoveryWorkListener;
+import org.bytesoft.openjtcc.supports.adapter.work.listener.TimingWorkListener;
 
 public class TransactionResourceAdapter implements ResourceAdapter {
-	private static final Logger logger = Logger.getLogger("lemon-jta");
+	private static final Logger logger = Logger.getLogger("openjtcc");
 	private static final long SECOND_MILLIS = 1000L;
 	private static final long MAX_WAIT_MILLIS = SECOND_MILLIS * 30;
 
@@ -53,8 +53,8 @@ public class TransactionResourceAdapter implements ResourceAdapter {
 		WorkManager workManager = this.bootstrapContext.getWorkManager();
 		boolean recoverySuccess = false;
 		try {
-			WorkListener recoveryWorkListener = new TransactionRecoveryWorkListener(this);
-			workManager.scheduleWork(this.recoveryWork, SECOND_MILLIS, null, recoveryWorkListener);
+			WorkListener recoveryListener = new RecoveryWorkListener(this);
+			workManager.scheduleWork(this.recoveryWork, SECOND_MILLIS, null, recoveryListener);
 			recoverySuccess = true;
 		} catch (WorkException e) {
 			this.recoveryCompleted = true;
@@ -63,8 +63,8 @@ public class TransactionResourceAdapter implements ResourceAdapter {
 
 		boolean timingSuccess = false;
 		try {
-			WorkListener timingWorkListener = new TransactionTimingWorkListener(this);
-			workManager.scheduleWork(this.timingWork, SECOND_MILLIS, null, timingWorkListener);
+			WorkListener timingListener = new TimingWorkListener(this);
+			workManager.scheduleWork(this.timingWork, SECOND_MILLIS, null, timingListener);
 			timingSuccess = true;
 		} catch (WorkException e) {
 			this.timingCompleted = true;
@@ -73,15 +73,15 @@ public class TransactionResourceAdapter implements ResourceAdapter {
 
 		boolean cleanupSuccess = false;
 		try {
-			WorkListener completionWorkListener = new TransactionCompletionWorkListener(this);
-			workManager.scheduleWork(this.completionWork, SECOND_MILLIS, null, completionWorkListener);
+			WorkListener cleanupListener = new CleanupWorkListener(this);
+			workManager.scheduleWork(this.completionWork, SECOND_MILLIS, null, cleanupListener);
 			cleanupSuccess = true;
 		} catch (WorkException e) {
 			this.cleanupCompleted = true;
 			e.printStackTrace();
 		}
 
-		if (!(recoverySuccess && timingSuccess && cleanupSuccess)) {
+		if ((recoverySuccess && timingSuccess && cleanupSuccess) == false) {
 			throw new ResourceAdapterInternalException();
 		}
 		logger.info("[ResourceAdapter] start successful");
