@@ -1,3 +1,18 @@
+/**
+ * Copyright 2014 yangming.liu<liuyangming@gmail.com>.
+ *
+ * This copyrighted material is made available to anyone wishing to use, modify,
+ * copy, or redistribute it subject to the terms and conditions of the GNU
+ * Lesser General Public License, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this distribution; if not, see <http://www.gnu.org/licenses/>.
+ */
 package org.bytesoft.openjtcc;
 
 import java.util.HashSet;
@@ -63,8 +78,8 @@ public class TransactionManagerImpl implements TransactionManager, TimingProcess
 
 			long expired = transactionContext.getExpiredTime();
 			long created = transactionContext.getCreatedTime();
-			int timeout = (int) ((expired - created) / 1000L);
-			transaction.setTransactionTimeout(timeout);
+			// int timeout = (int) ((expired - created) / 1000L);
+			// transaction.setTransactionTimeout(timeout);
 
 			TransactionLogger transactionLogger = this.transactionRepository.getTransactionLogger();
 
@@ -141,7 +156,7 @@ public class TransactionManagerImpl implements TransactionManager, TimingProcess
 		TransactionImpl transaction = new TransactionImpl();
 		transaction.setTransactionStatistic(this.transactionStatistic);
 
-		transaction.setTransactionTimeout(timeoutSeconds);
+		// transaction.setTransactionTimeout(timeoutSeconds);
 		transaction.setTransactionContext(transactionContext);
 		transaction.setTransactionStatus(new TransactionStatus());
 		transaction.setTransactionManager(this);
