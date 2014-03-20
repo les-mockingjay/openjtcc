@@ -53,8 +53,7 @@ public class TransactionManagerImpl implements TransactionManager, TimingProcess
 			throw new NotSupportedException();
 		}
 		/* initialize */
-		// transactionContext.setApplication(this.transactionConfig.getApplication());
-		// transactionContext.setEndpoint(this.transactionConfig.getEndpoint());
+		transactionContext.setInstanceKey(this.instanceKey);
 
 		XidImpl xid = transactionContext.getGlobalXid();
 		TransactionImpl transaction = this.transactionRepository.getTransaction(xid);
@@ -134,8 +133,7 @@ public class TransactionManagerImpl implements TransactionManager, TimingProcess
 		long expiredTime = createdTime + (timeoutSeconds * 1000L);
 		transactionContext.setCreatedTime(createdTime);
 		transactionContext.setExpiredTime(expiredTime);
-		// transactionContext.setApplication(this.transactionConfig.getApplication());
-		// transactionContext.setEndpoint(this.transactionConfig.getEndpoint());
+		transactionContext.setInstanceKey(this.instanceKey);
 		XidImpl globalXid = this.xidFactory.createGlobalXid();
 		transactionContext.setGlobalXid(globalXid);
 		transactionContext.setBranchXid(globalXid);
