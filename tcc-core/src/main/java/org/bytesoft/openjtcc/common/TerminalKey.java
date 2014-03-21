@@ -69,7 +69,7 @@ public class TerminalKey implements Cloneable, Serializable {
 	}
 
 	public String toString() {
-		return String.format("terminal: app= %s, end= %s", this.application, this.endpoint);
+		return String.format("terminal: application= %s, endpoint= %s", this.application, this.endpoint);
 	}
 
 }
