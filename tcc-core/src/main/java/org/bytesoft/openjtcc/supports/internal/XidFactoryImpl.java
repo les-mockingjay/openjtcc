@@ -106,6 +106,10 @@ public class XidFactoryImpl implements XidFactory {
 		return new XidImpl(global, branchQualifier);
 	}
 
+	public TerminalKey getTerminalKey() {
+		return terminalKey;
+	}
+
 	public void setTerminalKey(TerminalKey terminalKey) {
 		this.terminalKey = terminalKey;
 	}

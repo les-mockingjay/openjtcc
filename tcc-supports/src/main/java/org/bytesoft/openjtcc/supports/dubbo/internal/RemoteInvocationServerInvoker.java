@@ -45,8 +45,7 @@ public class RemoteInvocationServerInvoker implements RemoteInvocationService {
 	public RemoteInvocationResponseImpl invoke(RemoteInvocationRequestImpl request) {
 		RemoteInvocationResponseImpl response = this.validateRequest(request);
 		TerminalKey instanceKey = this.getTerminalKey();
-		response.setApplication(instanceKey.getApplication());
-		response.setEndpoint(instanceKey.getEndpoint());
+		response.setTerminalKey(instanceKey);
 
 		try {
 			if (RemoteInvocationType.service.equals(request.getInvocationType())) {
@@ -273,6 +272,11 @@ public class RemoteInvocationServerInvoker implements RemoteInvocationService {
 		return Thread.currentThread().getContextClassLoader().loadClass(clsName);
 	}
 
+	public TerminalKey getTerminalKey() {
+		TransactionManagerImpl txm = (TransactionManagerImpl) this.transactionManager;
+		return txm.getTerminalKey();
+	}
+
 	public void setRemoteInvocationInterceptor(RemoteInvocationInterceptor remoteInvocationInterceptor) {
 		this.remoteInvocationInterceptor = remoteInvocationInterceptor;
 	}
@@ -283,11 +287,6 @@ public class RemoteInvocationServerInvoker implements RemoteInvocationService {
 
 	public void setTransactionManager(TransactionManager transactionManager) {
 		this.transactionManager = transactionManager;
-	}
-
-	public TerminalKey getTerminalKey() {
-		TransactionManagerImpl txm = (TransactionManagerImpl) this.transactionManager;
-		return txm.getInstanceKey();
 	}
 
 }

@@ -83,7 +83,7 @@ public class DbTransactionLoggerImpl extends JdbcDaoSupport implements Transacti
 			TransactionStatus transactionStatus = transaction.getTransactionStatus();
 			XidImpl globalXid = transactionContext.getGlobalXid();
 			boolean coordinator = transactionContext.isCoordinator();
-			TerminalKey terminalKey = transactionContext.getInstanceKey();
+			TerminalKey terminalKey = transactionContext.getTerminalKey();
 
 			int index = 1;
 			stmt.setString(index++, terminalKey.getApplication());
@@ -120,7 +120,7 @@ public class DbTransactionLoggerImpl extends JdbcDaoSupport implements Transacti
 			Compensable<Serializable> service = holder.service;
 			CompensableInfo servInfo = this.compensableMarshaller.marshallCompensable(service);
 			XidImpl internalXid = holder.branchXid;
-			TerminalKey terminalKey = transactionContext.getInstanceKey();
+			TerminalKey terminalKey = transactionContext.getTerminalKey();
 
 			stmt.setString(1, terminalKey.getApplication());
 			stmt.setString(2, terminalKey.getEndpoint());
@@ -681,7 +681,7 @@ public class DbTransactionLoggerImpl extends JdbcDaoSupport implements Transacti
 
 				terminalKey.setApplication(this.instanceKey.getApplication());
 				terminalKey.setEndpoint(this.instanceKey.getEndpoint());
-				context.setInstanceKey(terminalKey);
+				context.setTerminalKey(terminalKey);
 
 				context.setRecovery(true);
 				context.setCompensable(true);

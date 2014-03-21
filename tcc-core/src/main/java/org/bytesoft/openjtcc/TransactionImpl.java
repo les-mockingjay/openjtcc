@@ -1060,13 +1060,12 @@ public class TransactionImpl extends TransactionArchive implements Transaction {
 		return true;
 	}
 
-	public synchronized String getEndpoint(String application) {
+	public synchronized TerminalKey getTerminalKey(String application) {
 		RemoteTerminator terminator = this.getTerminator(application);
 		if (terminator == null) {
 			return null;
 		} else {
-			TerminalKey terminalKey = terminator.getTerminalKey();
-			return terminalKey.getEndpoint();
+			return terminator.getTerminalKey();
 		}
 	}
 

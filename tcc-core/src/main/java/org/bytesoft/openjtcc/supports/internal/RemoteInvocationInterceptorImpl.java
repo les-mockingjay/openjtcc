@@ -25,6 +25,7 @@ import javax.transaction.SystemException;
 
 import org.bytesoft.openjtcc.TransactionImpl;
 import org.bytesoft.openjtcc.TransactionManagerImpl;
+import org.bytesoft.openjtcc.common.PropagationKey;
 import org.bytesoft.openjtcc.common.TerminalKey;
 import org.bytesoft.openjtcc.common.TransactionContext;
 import org.bytesoft.openjtcc.remote.RemoteTerminator;
@@ -53,6 +54,7 @@ public class RemoteInvocationInterceptorImpl implements RemoteInvocationIntercep
 			TransactionContext propagationContext = transactionContext.clone();
 			propagationContext.setBranchXid(branchXid);
 			propagationContext.setInstanceKey(this.transactionManager.getInstanceKey());
+			propagationContext.setTerminalKey(this.transactionManager.getTerminalKey());
 
 			request.setTransactionContext(propagationContext);
 
@@ -60,23 +62,35 @@ public class RemoteInvocationInterceptorImpl implements RemoteInvocationIntercep
 		}
 	}
 
-	public void beforeSendResponse(RemoteInvocationResponse response) throws IllegalStateException {
-		TransactionImpl transaction = this.getCurrentTransaction();
-		if (transaction != null) {
-			TransactionContext transactionContext = transaction.getTransactionContext();
-			TransactionContext propagationContext = transactionContext.clone();
-			response.setTransactionContext(propagationContext);
+	public void afterReceiveResponse(RemoteInvocationResponse response) throws IllegalStateException {
+		TransactionContext propagationContext = (TransactionContext) response.getTransactionContext();
+		if (propagationContext != null && propagationContext.isCompensable()) {
+			logger.info(String.format("[%15s] method: %s", "after-recv-res", response));
+			TransactionImpl transaction = this.getCurrentTransaction();
+			PropagationKey thisKey = this.transactionManager.getInstanceKey();
+			PropagationKey thatKey = propagationContext.getInstanceKey();
 
-			AssociateKey key = new AssociateKey();
-			key.global = transactionContext.getGlobalXid();
-			key.thread = Thread.currentThread();
+			if (thisKey.equals(thatKey)) {
+				try {
+					XidImpl branchXid = propagationContext.getBranchXid();
+					TerminalKey terminalKey = propagationContext.getTerminalKey();
 
-			XidImpl branchXid = this.branchXidMap.remove(key);
-			if (branchXid != null) {
-				transactionContext.revertTransactionContext(branchXid);
+					TerminatorInfo terminatorInfo = new TerminatorInfo();
+					terminatorInfo.setApplication(terminalKey.getApplication());
+					terminatorInfo.setEndpoint(terminalKey.getEndpoint());
+					terminatorInfo.setBranchXid(branchXid);
+
+					RemoteTerminator terminator = this.terminatorMarshaller.unmarshallTerminator(terminatorInfo);
+					transaction.registerTerminator(terminator);
+				} catch (IOException ex) {
+					throw new IllegalStateException(ex);
+				} catch (SystemException ex) {
+					throw new IllegalStateException(ex);
+				} catch (RuntimeException ex) {
+					throw new IllegalStateException(ex);
+				}
+
 			}
-
-			logger.info(String.format("[%15s] method: %s", "before-send-res", response));
 		}
 	}
 
@@ -110,34 +124,23 @@ public class RemoteInvocationInterceptorImpl implements RemoteInvocationIntercep
 		}
 	}
 
-	public void afterReceiveResponse(RemoteInvocationResponse response) throws IllegalStateException {
-		TransactionContext propagationContext = (TransactionContext) response.getTransactionContext();
-		if (propagationContext != null && propagationContext.isCompensable()) {
-			logger.info(String.format("[%15s] method: %s", "after-recv-res", response));
-			TransactionImpl transaction = this.getCurrentTransaction();
-			TerminalKey instanceKey = this.transactionManager.getInstanceKey();
-			TerminalKey terminalKey = propagationContext.getInstanceKey();
-			if (instanceKey.equals(terminalKey)) {
-				RemoteTerminator terminator;
-				try {
-					XidImpl branchXid = propagationContext.getBranchXid();
+	public void beforeSendResponse(RemoteInvocationResponse response) throws IllegalStateException {
+		TransactionImpl transaction = this.getCurrentTransaction();
+		if (transaction != null) {
+			TransactionContext transactionContext = transaction.getTransactionContext();
+			TransactionContext propagationContext = transactionContext.clone();
+			response.setTransactionContext(propagationContext);
 
-					TerminatorInfo terminatorInfo = new TerminatorInfo();
-					terminatorInfo.setApplication(terminalKey.getApplication());
-					terminatorInfo.setEndpoint(terminalKey.getEndpoint());
-					terminatorInfo.setBranchXid(branchXid);
+			AssociateKey key = new AssociateKey();
+			key.global = transactionContext.getGlobalXid();
+			key.thread = Thread.currentThread();
 
-					terminator = this.terminatorMarshaller.unmarshallTerminator(terminatorInfo);
-					transaction.registerTerminator(terminator);
-				} catch (IOException ex) {
-					throw new IllegalStateException(ex);
-				} catch (SystemException ex) {
-					throw new IllegalStateException(ex);
-				} catch (RuntimeException ex) {
-					throw new IllegalStateException(ex);
-				}
-
+			XidImpl branchXid = this.branchXidMap.remove(key);
+			if (branchXid != null) {
+				transactionContext.revertTransactionContext(branchXid);
 			}
+
+			logger.info(String.format("[%15s] method: %s", "before-send-res", response));
 		}
 	}
 

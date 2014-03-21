@@ -41,8 +41,15 @@ public class RemoteInvocationEndpointSelector implements InvocationHandler {
 	}
 
 	private RemoteInvocationService getRemoteInvocationService() {
-		String application = this.terminalKey.getApplication();
-		String endpoint = this.terminalKey.getEndpoint();
+
+		String application = null;
+		String endpoint = null;
+
+		if (this.terminalKey != null) {
+			application = this.terminalKey.getApplication();
+			endpoint = this.terminalKey.getEndpoint();
+		}
+
 		if (application == null || application.trim().equals("")) {
 			return (RemoteInvocationService) this.applicationContext.getBean(DEFAULT_REMOTE_SERVICE_NAME);
 		} else {
