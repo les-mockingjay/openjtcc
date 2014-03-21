@@ -27,12 +27,32 @@ public class TransactionContext implements Serializable, Cloneable {
 
 	private XidImpl globalXid;
 	private XidImpl branchXid;
-	private TerminalKey instanceKey;
+	private transient TerminalKey terminalKey;
+	private PropagationKey instanceKey;
 	private long createdTime;
 	private long expiredTime;
 	private boolean compensable;
 
 	public TransactionContext() {
+	}
+
+	public void propagateTransactionContext(TransactionContext that) {
+		this.branchXid = that.branchXid;
+	}
+
+	public void revertTransactionContext(XidImpl branchXid) {
+		this.branchXid = branchXid;
+	}
+
+	public TransactionContext clone() {
+		TransactionContext that = new TransactionContext();
+		that.globalXid = this.globalXid;
+		that.branchXid = this.branchXid;
+		that.instanceKey = this.instanceKey;
+		that.createdTime = System.currentTimeMillis();
+		that.expiredTime = this.getExpiredTime();
+		that.compensable = this.compensable;
+		return that;
 	}
 
 	public XidImpl getBranchXid() {
@@ -84,7 +104,7 @@ public class TransactionContext implements Serializable, Cloneable {
 	}
 
 	public boolean isFresh() {
-		return !this.recovery;
+		return this.recovery == false;
 	}
 
 	public boolean isRecovery() {
@@ -95,30 +115,20 @@ public class TransactionContext implements Serializable, Cloneable {
 		this.recovery = recovery;
 	}
 
-	public TerminalKey getInstanceKey() {
+	public PropagationKey getInstanceKey() {
 		return instanceKey;
 	}
 
-	public void setInstanceKey(TerminalKey instanceKey) {
+	public void setInstanceKey(PropagationKey instanceKey) {
 		this.instanceKey = instanceKey;
 	}
 
-	public TransactionContext clone() {
-		TransactionContext that = new TransactionContext();
-		that.globalXid = this.globalXid;
-		that.branchXid = this.branchXid;
-		that.instanceKey = this.instanceKey;
-		that.createdTime = System.currentTimeMillis();
-		that.expiredTime = this.getExpiredTime();
-		that.compensable = this.compensable;
-		return that;
+	public TerminalKey getTerminalKey() {
+		return terminalKey;
 	}
 
-	public void propagateTransactionContext(TransactionContext that) {
-		this.branchXid = that.branchXid;
+	public void setTerminalKey(TerminalKey terminalKey) {
+		this.terminalKey = terminalKey;
 	}
 
-	public void revertTransactionContext(XidImpl branchXid) {
-		this.branchXid = branchXid;
-	}
 }

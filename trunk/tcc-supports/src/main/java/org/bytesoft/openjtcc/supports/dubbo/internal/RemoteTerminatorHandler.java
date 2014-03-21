@@ -30,25 +30,25 @@ import org.bytesoft.openjtcc.supports.dubbo.RemoteInvocationService;
 import org.bytesoft.openjtcc.supports.dubbo.RemoteInvocationServiceMarshaller;
 import org.bytesoft.openjtcc.supports.dubbo.RemoteInvocationType;
 import org.bytesoft.openjtcc.supports.serialize.TerminatorInfo;
-import org.bytesoft.openjtcc.xa.XidFactory;
 import org.bytesoft.openjtcc.xa.XidImpl;
 import org.bytesoft.utils.CommonUtils;
 
 public class RemoteTerminatorHandler implements InvocationHandler {
-	private XidFactory xidFactory;
 	private TerminatorInfo remoteTerminatorInfo;
 	private RemoteInvocationService remoteInvocationService;
 	private RemoteInvocationServiceMarshaller remoteServiceFactory;
 
 	@Override
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+		String methodName = method.getName();
+
 		if (Object.class.equals(method.getDeclaringClass())) {
 			return method.invoke(this, args);
 		} else {
 			try {
-				Method infoMethod = null;
-				infoMethod = TerminatorInfo.class.getDeclaredMethod(method.getName(), method.getParameterTypes());
-				return infoMethod.invoke(this.remoteTerminatorInfo, args);
+				Class<?> currentClass = this.getClass();
+				Method nativeMethod = currentClass.getDeclaredMethod(methodName, method.getParameterTypes());
+				return nativeMethod.invoke(this, args);
 			} catch (Exception ex) {
 				// ignore
 			}
@@ -61,7 +61,7 @@ public class RemoteTerminatorHandler implements InvocationHandler {
 			request.setInvocationType(invocationType);
 			request.setDeclaringClass(method.getDeclaringClass().getName());
 			request.setInterfaceClass(RemoteTerminator.class.getSimpleName());
-			request.setMethodName(method.getName());
+			request.setMethodName(methodName);
 			Class<?>[] types = method.getParameterTypes();
 			String[] parameterTypes = new String[types.length];
 			for (int i = 0; i < types.length; i++) {
@@ -72,7 +72,7 @@ public class RemoteTerminatorHandler implements InvocationHandler {
 
 			TransactionContext transactionContext = new TransactionContext();
 			XidImpl branchXid = this.remoteTerminatorInfo.getBranchXid();
-			XidImpl globalXid = this.xidFactory.createGlobalXid(branchXid.getGlobalTransactionId());
+			XidImpl globalXid = new XidImpl(branchXid.getGlobalTransactionId());
 			transactionContext.setBranchXid(branchXid);
 			transactionContext.setGlobalXid(globalXid);
 			request.setTransactionContext(transactionContext);
@@ -155,6 +155,13 @@ public class RemoteTerminatorHandler implements InvocationHandler {
 		}
 	}
 
+	public TerminalKey getTerminalKey() {
+		TerminalKey terminalKey = new TerminalKey();
+		terminalKey.setApplication(this.remoteTerminatorInfo.getApplication());
+		terminalKey.setEndpoint(this.remoteTerminatorInfo.getEndpoint());
+		return terminalKey;
+	}
+
 	public TerminatorInfo getRemoteTerminatorInfo() {
 		return remoteTerminatorInfo;
 	}
@@ -177,10 +184,6 @@ public class RemoteTerminatorHandler implements InvocationHandler {
 
 	public void setRemoteServiceFactory(RemoteInvocationServiceMarshaller remoteServiceFactory) {
 		this.remoteServiceFactory = remoteServiceFactory;
-	}
-
-	public void setXidFactory(XidFactory xidFactory) {
-		this.xidFactory = xidFactory;
 	}
 
 	@Override

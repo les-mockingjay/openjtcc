@@ -32,6 +32,7 @@ import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
+import org.bytesoft.openjtcc.common.PropagationKey;
 import org.bytesoft.openjtcc.common.TerminalKey;
 import org.bytesoft.openjtcc.common.TransactionContext;
 import org.bytesoft.openjtcc.common.TransactionStatus;
@@ -41,6 +42,7 @@ import org.bytesoft.openjtcc.supports.AbstractSynchronization;
 import org.bytesoft.openjtcc.supports.TransactionLogger;
 import org.bytesoft.openjtcc.supports.TransactionRepository;
 import org.bytesoft.openjtcc.supports.TransactionStatistic;
+import org.bytesoft.openjtcc.supports.internal.XidFactoryImpl;
 import org.bytesoft.openjtcc.supports.schedule.CleanupProcesser;
 import org.bytesoft.openjtcc.supports.schedule.TimingProcesser;
 import org.bytesoft.openjtcc.xa.XidFactory;
@@ -50,8 +52,8 @@ import org.bytesoft.utils.ByteUtils;
 public class TransactionManagerImpl implements TransactionManager, TimingProcesser {
 	private static final Logger logger = Logger.getLogger("openjtcc");
 
-	private XidFactory xidFactory;
-	private TerminalKey instanceKey;
+	private XidFactoryImpl xidFactory;
+	private PropagationKey instanceKey;
 
 	private final Map<Thread, AssociatedContext> threadToTxnMap = new ConcurrentHashMap<Thread, AssociatedContext>();
 	private final Map<Thread, AbstractSynchronization> threadToSynMap = new ConcurrentHashMap<Thread, AbstractSynchronization>();
@@ -63,27 +65,27 @@ public class TransactionManagerImpl implements TransactionManager, TimingProcess
 
 	private int transactionTimeout = 5 * 60;
 
-	public TransactionImpl begin(TransactionContext transactionContext) throws NotSupportedException, SystemException {
+	public TransactionImpl begin(TransactionContext propagationContext) throws NotSupportedException, SystemException {
 		if (this.getCurrentTransaction() != null) {
 			throw new NotSupportedException();
 		}
-		/* initialize */
-		transactionContext.setInstanceKey(this.instanceKey);
 
-		XidImpl xid = transactionContext.getGlobalXid();
+		XidImpl xid = propagationContext.getGlobalXid();
 		TransactionImpl transaction = this.transactionRepository.getTransaction(xid);
 		if (transaction == null) {
 			transaction = new TransactionImpl();
 			transaction.setTransactionStatistic(this.transactionStatistic);
 
-			long expired = transactionContext.getExpiredTime();
-			long created = transactionContext.getCreatedTime();
+			long expired = propagationContext.getExpiredTime();
+			long created = propagationContext.getCreatedTime();
 			// int timeout = (int) ((expired - created) / 1000L);
 			// transaction.setTransactionTimeout(timeout);
 
 			TransactionLogger transactionLogger = this.transactionRepository.getTransactionLogger();
 
-			TransactionContext context = transactionContext.clone();
+			TransactionContext context = propagationContext.clone();
+			context.setTerminalKey(this.getTerminalKey());
+
 			context.setCompensable(false);
 			transaction.setTransactionContext(context);
 			transaction.setTransactionStatus(new TransactionStatus());
@@ -148,7 +150,7 @@ public class TransactionManagerImpl implements TransactionManager, TimingProcess
 		long expiredTime = createdTime + (timeoutSeconds * 1000L);
 		transactionContext.setCreatedTime(createdTime);
 		transactionContext.setExpiredTime(expiredTime);
-		transactionContext.setInstanceKey(this.instanceKey);
+		transactionContext.setTerminalKey(this.getTerminalKey());
 		XidImpl globalXid = this.xidFactory.createGlobalXid();
 		transactionContext.setGlobalXid(globalXid);
 		transactionContext.setBranchXid(globalXid);
@@ -529,25 +531,26 @@ public class TransactionManagerImpl implements TransactionManager, TimingProcess
 		this.cleanupProcesser.registerTransaction(transaction);
 	}
 
-	// public IdentifierToken getIdentifierToken() {
-	// if (this.identifierToken == null) {
-	// this.initIdentifierToken();
-	// }
-	// return this.identifierToken;
-	// }
+	public PropagationKey getInstanceKey() {
+		if (this.instanceKey == null) {
+			this.initializeInstanceKey();
+		}
+		return this.instanceKey;
+	}
 
-	// public synchronized void initIdentifierToken() {
-	// if (this.identifierToken == null) {
-	// XidImpl xid = XidFactory.createGlobalXid(this.transactionConfig);
-	// this.identifierToken = new IdentifierToken(xid.getGlobalTransactionId());
-	// }
-	// }
+	public synchronized void initializeInstanceKey() {
+		if (this.instanceKey == null) {
+			XidImpl xid = this.xidFactory.createGlobalXid();
+			byte[] token = xid.getGlobalTransactionId();
+			this.instanceKey = new PropagationKey(token);
+		}
+	}
 
 	public XidFactory getXidFactory() {
 		return xidFactory;
 	}
 
-	public void setXidFactory(XidFactory xidFactory) {
+	public void setXidFactory(XidFactoryImpl xidFactory) {
 		this.xidFactory = xidFactory;
 	}
 
@@ -575,12 +578,8 @@ public class TransactionManagerImpl implements TransactionManager, TimingProcess
 		this.transactionStatistic = transactionStatistic;
 	}
 
-	public TerminalKey getInstanceKey() {
-		return instanceKey;
-	}
-
-	public void setInstanceKey(TerminalKey instanceKey) {
-		this.instanceKey = instanceKey;
+	public TerminalKey getTerminalKey() {
+		return this.xidFactory.getTerminalKey();
 	}
 
 }

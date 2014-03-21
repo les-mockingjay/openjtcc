@@ -21,7 +21,7 @@
 
 	<bean id="terminalKey" class="org.bytesoft.openjtcc.common.TerminalKey">
 		<property name="application" value="${tcc.application}" />
-		<property name="endpoint" value="${tcc.application}" />
+		<property name="endpoint" value="${tcc.endpoint}" />
 	</bean>
 
 	<bean id="xidFactory" class="org.bytesoft.openjtcc.supports.internal.XidFactoryImpl">
@@ -33,7 +33,6 @@
 		<property name="cleanupProcesser" ref="cleanupWork" />
 		<property name="transactionStatistic" ref="transactionStatistic" />
 		<property name="xidFactory" ref="xidFactory" />
-		<property name="instanceKey" ref="terminalKey" />
 	</bean>
 
 	<bean id="userTransaction" class="org.bytesoft.openjtcc.UserTransactionImpl">
