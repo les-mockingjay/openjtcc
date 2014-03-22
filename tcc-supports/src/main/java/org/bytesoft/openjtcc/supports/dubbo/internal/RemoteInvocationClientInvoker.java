@@ -103,7 +103,7 @@ public class RemoteInvocationClientInvoker implements InvocationHandler {
 				terminalKey = transaction.getTerminalKey(this.terminalKey.getApplication());
 			}
 
-			if (terminalKey != null) {
+			if (terminalKey == null) {
 				terminalKey = this.terminalKey;
 				request.setTerminalKey(terminalKey);
 			} else {

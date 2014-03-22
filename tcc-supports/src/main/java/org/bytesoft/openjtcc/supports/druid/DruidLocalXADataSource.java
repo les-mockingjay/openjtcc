@@ -32,6 +32,9 @@ import javax.transaction.xa.XAResource;
 import com.alibaba.druid.pool.DruidDataSource;
 import com.alibaba.druid.pool.DruidPooledConnection;
 
+/**
+ * 不推荐，应优先使用DBCP的org.apache.commons.dbcp.managed.BasicManagedDataSource类。
+ */
 public class DruidLocalXADataSource implements XADataSource, DataSource {
 	private PrintWriter logWriter;
 	private int loginTimeout;

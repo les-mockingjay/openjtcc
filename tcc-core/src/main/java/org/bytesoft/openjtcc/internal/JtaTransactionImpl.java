@@ -237,7 +237,7 @@ public class JtaTransactionImpl implements Transaction {
 	}
 
 	public String toString() {
-		return String.format("InternalTransactionImpl[xid: %s, status: %s]", this.transactionContext.getGlobalXid(),
+		return String.format("InternalTransactionImpl[xid: %s, status: %s]", this.transactionContext.getCurrentXid(),
 				this.transactionStatus.getStatusCode());
 	}
 
