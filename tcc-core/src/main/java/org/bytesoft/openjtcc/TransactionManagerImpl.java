@@ -85,6 +85,7 @@ public class TransactionManagerImpl implements TransactionManager, TimingProcess
 
 			TransactionContext context = propagationContext.clone();
 			context.setTerminalKey(this.getTerminalKey());
+			context.setCreationXid(propagationContext.getCurrentXid());
 
 			context.setCompensable(false);
 			transaction.setTransactionContext(context);
@@ -130,7 +131,7 @@ public class TransactionManagerImpl implements TransactionManager, TimingProcess
 				if (sync != null) {
 					try {
 						TransactionContext transactionContext = global.getTransactionContext();
-						sync.afterCreation(transactionContext.getBranchXid());
+						sync.afterCreation(transactionContext.getCurrentXid());
 					} finally {
 						this.unRegisterSynchronization(sync);
 					}
@@ -152,8 +153,8 @@ public class TransactionManagerImpl implements TransactionManager, TimingProcess
 		transactionContext.setExpiredTime(expiredTime);
 		transactionContext.setTerminalKey(this.getTerminalKey());
 		XidImpl globalXid = this.xidFactory.createGlobalXid();
-		transactionContext.setGlobalXid(globalXid);
-		transactionContext.setBranchXid(globalXid);
+		// transactionContext.setGlobalXid(globalXid);
+		transactionContext.setCurrentXid(globalXid);
 
 		TransactionImpl transaction = new TransactionImpl();
 		transaction.setTransactionStatistic(this.transactionStatistic);
@@ -180,7 +181,7 @@ public class TransactionManagerImpl implements TransactionManager, TimingProcess
 		AbstractSynchronization sync = this.threadToSynMap.get(Thread.currentThread());
 		if (sync != null) {
 			try {
-				sync.afterCreation(transactionContext.getBranchXid());
+				sync.afterCreation(transactionContext.getCurrentXid());
 			} finally {
 				this.unRegisterSynchronization(sync);
 			}

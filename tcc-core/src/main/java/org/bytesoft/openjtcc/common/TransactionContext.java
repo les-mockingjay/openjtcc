@@ -16,6 +16,7 @@
 package org.bytesoft.openjtcc.common;
 
 import java.io.Serializable;
+import java.util.Stack;
 
 import org.bytesoft.openjtcc.xa.XidImpl;
 
@@ -24,30 +25,42 @@ public class TransactionContext implements Serializable, Cloneable {
 
 	private transient boolean coordinator;
 	private transient boolean recovery;
-
-	private XidImpl globalXid;
-	private XidImpl branchXid;
+	private transient XidImpl creationXid;
 	private transient TerminalKey terminalKey;
+	private transient final Stack<XidImpl> stack;
+
+	private XidImpl currentXid;
 	private PropagationKey instanceKey;
 	private long createdTime;
 	private long expiredTime;
 	private boolean compensable;
 
 	public TransactionContext() {
+		this.stack = new Stack<XidImpl>();
 	}
 
-	public void propagateTransactionContext(TransactionContext that) {
-		this.branchXid = that.branchXid;
+	public synchronized void propagateTransactionContext(TransactionContext that) {
+		XidImpl xid = that.getCurrentXid();
+		if (xid.equals(this.creationXid)) {
+			// ignore
+		} else {
+			this.stack.push(this.currentXid);
+			this.currentXid = that.currentXid;
+		}
 	}
 
-	public void revertTransactionContext(XidImpl branchXid) {
-		this.branchXid = branchXid;
+	public synchronized void revertTransactionContext() {
+		if (this.currentXid.equals(this.creationXid)) {
+			// ignore
+		} else {
+			this.currentXid = this.stack.pop();
+		}
 	}
 
 	public TransactionContext clone() {
 		TransactionContext that = new TransactionContext();
-		that.globalXid = this.globalXid;
-		that.branchXid = this.branchXid;
+		// that.globalXid = this.globalXid;
+		that.currentXid = this.currentXid;
 		that.instanceKey = this.instanceKey;
 		that.createdTime = System.currentTimeMillis();
 		that.expiredTime = this.getExpiredTime();
@@ -55,20 +68,16 @@ public class TransactionContext implements Serializable, Cloneable {
 		return that;
 	}
 
-	public XidImpl getBranchXid() {
-		return branchXid;
+	public XidImpl getCurrentXid() {
+		return currentXid;
 	}
 
-	public void setBranchXid(XidImpl branchXid) {
-		this.branchXid = branchXid;
-	}
-
-	public void setGlobalXid(XidImpl globalXid) {
-		this.globalXid = globalXid;
+	public void setCurrentXid(XidImpl branchXid) {
+		this.currentXid = branchXid;
 	}
 
 	public XidImpl getGlobalXid() {
-		return this.globalXid;
+		return new XidImpl(this.currentXid.getGlobalTransactionId());
 	}
 
 	public boolean isCoordinator() {
@@ -129,6 +138,14 @@ public class TransactionContext implements Serializable, Cloneable {
 
 	public void setTerminalKey(TerminalKey terminalKey) {
 		this.terminalKey = terminalKey;
+	}
+
+	public XidImpl getCreationXid() {
+		return creationXid;
+	}
+
+	public void setCreationXid(XidImpl creationXid) {
+		this.creationXid = creationXid;
 	}
 
 }

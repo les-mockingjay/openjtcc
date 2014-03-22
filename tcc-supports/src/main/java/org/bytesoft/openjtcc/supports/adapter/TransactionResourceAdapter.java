@@ -99,13 +99,19 @@ public class TransactionResourceAdapter implements ResourceAdapter {
 	}
 
 	public void stop() {
-		logger.info("[ResourceAdapter] stop");
-		boolean success = this.processStop();
+		boolean success = false;
+		try {
+			success = this.processStop();
+		} catch (RuntimeException rex) {
+			rex.printStackTrace();
+		}
+
 		if (success) {
 			// ignore
 		} else {
-			throw new RuntimeException();
+			logger.warning("[ResourceAdapter] stop failure!");
 		}
+
 	}
 
 	private boolean processStop() {
@@ -126,7 +132,9 @@ public class TransactionResourceAdapter implements ResourceAdapter {
 				executing = false;
 			}
 		}
-		logger.info(String.format("[ResourceAdapter] stop cost: %s", System.currentTimeMillis() - begin));
+
+		long costMillis = System.currentTimeMillis() - begin;
+		logger.info(String.format("[ResourceAdapter] stop successful. cost: %s", costMillis));
 		return success;
 	}
 

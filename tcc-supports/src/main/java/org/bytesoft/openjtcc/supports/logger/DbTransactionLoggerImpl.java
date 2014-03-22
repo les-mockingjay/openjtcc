@@ -688,8 +688,9 @@ public class DbTransactionLoggerImpl extends JdbcDaoSupport implements Transacti
 				context.setCoordinator(coordinator);
 				byte[] globalBytes = ByteUtils.stringToByteArray(globalTransactionId);
 				XidImpl globalXid = this.xidFactory.createGlobalXid(globalBytes);
-				context.setGlobalXid(globalXid);
-				context.setBranchXid(globalXid);
+				// context.setGlobalXid(globalXid);
+				context.setCreationXid(globalXid);
+				context.setCurrentXid(globalXid);
 
 				context.setCreatedTime(createdTime.getTime());
 

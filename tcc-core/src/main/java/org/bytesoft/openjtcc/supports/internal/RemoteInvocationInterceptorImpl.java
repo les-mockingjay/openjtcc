@@ -16,8 +16,6 @@
 package org.bytesoft.openjtcc.supports.internal;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 import javax.transaction.NotSupportedException;
@@ -36,23 +34,21 @@ import org.bytesoft.openjtcc.supports.serialize.TerminatorInfo;
 import org.bytesoft.openjtcc.supports.serialize.TerminatorMarshaller;
 import org.bytesoft.openjtcc.xa.XidFactory;
 import org.bytesoft.openjtcc.xa.XidImpl;
-import org.bytesoft.utils.CommonUtils;
 
 public class RemoteInvocationInterceptorImpl implements RemoteInvocationInterceptor {
 	private static final Logger logger = Logger.getLogger("openjtcc");
 
-	private XidFactory xidFactory;
 	private TerminatorMarshaller terminatorMarshaller;
 	private TransactionManagerImpl transactionManager;
-	private Map<AssociateKey, XidImpl> branchXidMap = new ConcurrentHashMap<AssociateKey, XidImpl>();
 
 	public void beforeSendRequest(RemoteInvocationRequest request) throws IllegalStateException {
 		TransactionImpl transaction = this.getCurrentTransaction();
 		if (transaction != null) {
 			TransactionContext transactionContext = transaction.getTransactionContext();
-			XidImpl branchXid = this.xidFactory.createBranchXid(transactionContext.getGlobalXid());
+			XidFactory xidFactory = this.transactionManager.getXidFactory();
+			XidImpl branchXid = xidFactory.createBranchXid(transactionContext.getGlobalXid());
 			TransactionContext propagationContext = transactionContext.clone();
-			propagationContext.setBranchXid(branchXid);
+			propagationContext.setCurrentXid(branchXid);
 			propagationContext.setInstanceKey(this.transactionManager.getInstanceKey());
 			propagationContext.setTerminalKey(this.transactionManager.getTerminalKey());
 
@@ -72,7 +68,7 @@ public class RemoteInvocationInterceptorImpl implements RemoteInvocationIntercep
 
 			if (thisKey.equals(thatKey)) {
 				try {
-					XidImpl branchXid = propagationContext.getBranchXid();
+					XidImpl branchXid = propagationContext.getCurrentXid();
 					TerminalKey terminalKey = propagationContext.getTerminalKey();
 
 					TerminatorInfo terminatorInfo = new TerminatorInfo();
@@ -99,16 +95,7 @@ public class RemoteInvocationInterceptorImpl implements RemoteInvocationIntercep
 		if (propagationContext != null) {
 			logger.info(String.format("[%15s] method: %s", "after-recv-req", request));
 
-			AssociateKey key = new AssociateKey();
-			key.global = propagationContext.getGlobalXid();
-			key.thread = Thread.currentThread();
-
 			TransactionImpl transaction = this.transactionManager.getCurrentTransaction();
-			if (transaction != null) {
-				TransactionContext transactionContext = transaction.getTransactionContext();
-				this.branchXidMap.put(key, transactionContext.getBranchXid());
-			}
-
 			try {
 				transaction = this.transactionManager.begin(propagationContext);
 				TransactionContext transactionContext = transaction.getTransactionContext();
@@ -131,14 +118,9 @@ public class RemoteInvocationInterceptorImpl implements RemoteInvocationIntercep
 			TransactionContext propagationContext = transactionContext.clone();
 			response.setTransactionContext(propagationContext);
 
-			AssociateKey key = new AssociateKey();
-			key.global = transactionContext.getGlobalXid();
-			key.thread = Thread.currentThread();
+			transactionContext.revertTransactionContext();
 
-			XidImpl branchXid = this.branchXidMap.remove(key);
-			if (branchXid != null) {
-				transactionContext.revertTransactionContext(branchXid);
-			}
+			this.transactionManager.unassociateTransaction();
 
 			logger.info(String.format("[%15s] method: %s", "before-send-res", response));
 		}
@@ -160,34 +142,4 @@ public class RemoteInvocationInterceptorImpl implements RemoteInvocationIntercep
 		this.terminatorMarshaller = terminatorMarshaller;
 	}
 
-	public void setXidFactory(XidFactory xidFactory) {
-		this.xidFactory = xidFactory;
-	}
-
-	public static class AssociateKey {
-		public XidImpl global;
-		public Thread thread;
-
-		@Override
-		public int hashCode() {
-			int hash = 7;
-			hash += 11 * (this.global == null ? 0 : this.global.hashCode());
-			hash += 13 * (this.thread == null ? 0 : this.thread.hashCode());
-			return hash;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (obj == null) {
-				return false;
-			} else if (!AssociateKey.class.isInstance(obj)) {
-				return false;
-			}
-			AssociateKey that = (AssociateKey) obj;
-			boolean globalEquals = CommonUtils.equals(this.global, that.global);
-			boolean threadEquals = CommonUtils.equals(this.thread, that.thread);
-			return globalEquals && threadEquals;
-		}
-
-	}
 }

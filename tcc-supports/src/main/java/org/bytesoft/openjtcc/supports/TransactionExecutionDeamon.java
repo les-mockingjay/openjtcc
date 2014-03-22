@@ -24,7 +24,9 @@ import org.bytesoft.openjtcc.supports.adapter.work.TransactionRecoveryWork;
 import org.bytesoft.openjtcc.supports.adapter.work.TransactionTimingWork;
 
 /**
- * 不推荐。优先使用TransactionResourceAdapter。
+ * 用于支持JSR-236 (Concurrency Utilities For JavaEE)。
+ * 
+ * 使用Spring时，若AppServer不支持JSR-236，则优先使用TransactionResourceAdapter。
  */
 public class TransactionExecutionDeamon {
 	private static final Logger logger = Logger.getLogger("openjtcc");
