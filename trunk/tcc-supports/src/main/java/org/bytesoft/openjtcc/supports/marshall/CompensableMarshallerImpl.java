@@ -22,7 +22,7 @@ import org.bytesoft.openjtcc.Compensable;
 import org.bytesoft.openjtcc.supports.serialize.CompensableInfo;
 import org.bytesoft.openjtcc.supports.serialize.CompensableMarshaller;
 import org.bytesoft.openjtcc.supports.spring.bean.NativeCompensableProxy;
-import org.bytesoft.openjtcc.supports.spring.bean.beanfactory.NativeBeanFactory;
+import org.bytesoft.openjtcc.supports.spring.beanfactory.NativeBeanFactory;
 
 public class CompensableMarshallerImpl implements CompensableMarshaller/* , ApplicationContextAware */{
 	private NativeBeanFactory beanFactory;
