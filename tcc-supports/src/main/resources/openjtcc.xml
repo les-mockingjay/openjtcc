@@ -68,17 +68,17 @@
 		<property name="transactionManager" ref="tccTransactionManager" />
 	</bean>
 
-	<bean id="remoteBeanFactory" class="org.bytesoft.openjtcc.supports.spring.bean.beanfactory.RemoteBeanFactoryImpl">
+	<bean id="remoteBeanFactory" class="org.bytesoft.openjtcc.supports.spring.beanfactory.RemoteBeanFactoryImpl">
 		<property name="transactionManager" ref="tccTransactionManager" />
 		<property name="remoteInvocationInterceptor" ref="remoteInvocationInterceptor" />
 		<property name="remoteInvocationServiceFactory" ref="remoteInvocationServiceFactory" />
 	</bean>
 
-	<bean id="nativeBeanFactory" class="org.bytesoft.openjtcc.supports.spring.bean.beanfactory.NativeBeanFactoryImpl">
+	<bean id="nativeBeanFactory" class="org.bytesoft.openjtcc.supports.spring.beanfactory.NativeBeanFactoryImpl">
 		<property name="transactionManager" ref="tccTransactionManager" />
 	</bean>
 
-	<bean id="propagateBeanFactory" class="org.bytesoft.openjtcc.supports.spring.bean.beanfactory.PropagateBeanFactoryImpl">
+	<bean id="propagateBeanFactory" class="org.bytesoft.openjtcc.supports.spring.beanfactory.PropagateBeanFactoryImpl">
 		<property name="transactionManager" ref="tccTransactionManager" />
 	</bean>
 
