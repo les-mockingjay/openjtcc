@@ -45,7 +45,7 @@ public class TransactionContext implements Serializable, Cloneable {
 			// ignore
 		} else {
 			this.stack.push(this.currentXid);
-			this.currentXid = that.currentXid;
+			this.currentXid = xid;
 		}
 	}
 
@@ -68,6 +68,14 @@ public class TransactionContext implements Serializable, Cloneable {
 		return that;
 	}
 
+	public boolean isCoordinator() {
+		if (this.coordinator) {
+			return this.currentXid.equals(this.creationXid);
+		} else {
+			return false;
+		}
+	}
+
 	public XidImpl getCurrentXid() {
 		return currentXid;
 	}
@@ -78,10 +86,6 @@ public class TransactionContext implements Serializable, Cloneable {
 
 	public XidImpl getGlobalXid() {
 		return new XidImpl(this.currentXid.getGlobalTransactionId());
-	}
-
-	public boolean isCoordinator() {
-		return coordinator;
 	}
 
 	public void setCoordinator(boolean coordinator) {

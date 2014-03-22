@@ -154,6 +154,7 @@ public class TransactionManagerImpl implements TransactionManager, TimingProcess
 		transactionContext.setTerminalKey(this.getTerminalKey());
 		XidImpl globalXid = this.xidFactory.createGlobalXid();
 		// transactionContext.setGlobalXid(globalXid);
+		transactionContext.setCreationXid(globalXid);
 		transactionContext.setCurrentXid(globalXid);
 
 		TransactionImpl transaction = new TransactionImpl();
