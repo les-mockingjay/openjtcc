@@ -72,9 +72,9 @@ public class RemoteTerminatorHandler implements InvocationHandler {
 
 			TransactionContext transactionContext = new TransactionContext();
 			XidImpl branchXid = this.remoteTerminatorInfo.getBranchXid();
-			XidImpl globalXid = new XidImpl(branchXid.getGlobalTransactionId());
-			transactionContext.setBranchXid(branchXid);
-			transactionContext.setGlobalXid(globalXid);
+			// XidImpl globalXid = new XidImpl(branchXid.getGlobalTransactionId());
+			transactionContext.setCurrentXid(branchXid);
+			// transactionContext.setGlobalXid(globalXid);
 			request.setTransactionContext(transactionContext);
 
 			if (this.remoteInvocationService == null) {

@@ -69,7 +69,7 @@ public class TransactionImpl extends TransactionArchive implements Transaction {
 
 	public synchronized void prepareCoordinator() throws SystemException {
 
-		XidImpl branchXid = this.transactionContext.getBranchXid();
+		XidImpl branchXid = this.transactionContext.getCurrentXid();
 		CompensableArchive holder = this.xidToNativeSvcMap.get(branchXid);
 		JtaTransactionImpl internalTransaction = this.internalTxnMap.get(branchXid);
 
@@ -167,7 +167,8 @@ public class TransactionImpl extends TransactionArchive implements Transaction {
 
 	}
 
-	private boolean commitParticipant() throws HeuristicMixedException, HeuristicRollbackException, SystemException {
+	private boolean confirmParticipantTerminator() throws HeuristicMixedException, HeuristicRollbackException,
+			SystemException {
 		boolean committedExists = false;
 		boolean rolledbackExists = false;
 		boolean mixedExists = false;
@@ -515,7 +516,7 @@ public class TransactionImpl extends TransactionArchive implements Transaction {
 	}
 
 	public void rollbackTryingTransaction() throws IllegalStateException, SystemException {
-		XidImpl branchXid = this.transactionContext.getBranchXid();
+		XidImpl branchXid = this.transactionContext.getCurrentXid();
 		CompensableArchive holder = this.xidToNativeSvcMap.get(branchXid);
 
 		if (holder == null) {
@@ -548,7 +549,7 @@ public class TransactionImpl extends TransactionArchive implements Transaction {
 	}
 
 	public void rollbackCompleteTransaction() throws IllegalStateException, SystemException {
-		XidImpl branchXid = this.transactionContext.getBranchXid();
+		XidImpl branchXid = this.transactionContext.getCurrentXid();
 		CompensableArchive holder = this.xidToNativeSvcMap.get(branchXid);
 
 		if (holder == null) {
@@ -584,7 +585,7 @@ public class TransactionImpl extends TransactionArchive implements Transaction {
 	public void commitTryingTransaction() throws HeuristicMixedException, HeuristicRollbackException,
 			IllegalStateException, RollbackException, SecurityException, SystemException {
 
-		XidImpl branchXid = this.transactionContext.getBranchXid();
+		XidImpl branchXid = this.transactionContext.getCurrentXid();
 		CompensableArchive holder = this.xidToNativeSvcMap.get(branchXid);
 
 		if (holder == null) {
@@ -627,7 +628,7 @@ public class TransactionImpl extends TransactionArchive implements Transaction {
 	public void commitCompleteTransaction() throws HeuristicMixedException, HeuristicRollbackException,
 			IllegalStateException, RollbackException, SecurityException, SystemException {
 
-		XidImpl branchXid = this.transactionContext.getBranchXid();
+		XidImpl branchXid = this.transactionContext.getCurrentXid();
 		CompensableArchive holder = this.xidToNativeSvcMap.get(branchXid);
 
 		if (holder == null) {
@@ -673,54 +674,55 @@ public class TransactionImpl extends TransactionArchive implements Transaction {
 	}
 
 	public synchronized void coordinatorCommit() {
-		CompensableArchive launchHolder = null;
 
 		Iterator<Map.Entry<XidImpl, CompensableArchive>> itr = this.xidToNativeSvcMap.entrySet().iterator();
 		while (itr.hasNext()) {
 			Map.Entry<XidImpl, CompensableArchive> entry = itr.next();
 			CompensableArchive holder = entry.getValue();
 			if (holder.launchSvc) {
-				launchHolder = holder;
+				this.confirmLaunchCompensable(holder);
 				break;
 			}
 
 		}
 
-		if (launchHolder != null) {
-			boolean confirmRequired = true;
-			if (launchHolder.confirmed && launchHolder.committed) {
-				confirmRequired = false;
-			} else if (launchHolder.confirmed && launchHolder.rolledback) {
-				confirmRequired = true;
-			} else if (launchHolder.cancelled && launchHolder.committed) {
-				confirmRequired = false;
-			} else if (launchHolder.cancelled && launchHolder.rolledback) {
-				confirmRequired = true;
-			} else if (launchHolder.tryCommitted == false && launchHolder.variable == null) {
-				confirmRequired = false;
+	}
+
+	private void confirmLaunchCompensable(CompensableArchive launchHolder) {
+
+		boolean confirmRequired = true;
+		if (launchHolder.confirmed && launchHolder.committed) {
+			confirmRequired = false;
+		} else if (launchHolder.confirmed && launchHolder.rolledback) {
+			confirmRequired = true;
+		} else if (launchHolder.cancelled && launchHolder.committed) {
+			confirmRequired = false;
+		} else if (launchHolder.cancelled && launchHolder.rolledback) {
+			confirmRequired = true;
+		} else if (launchHolder.tryCommitted == false && launchHolder.variable == null) {
+			confirmRequired = false;
+		}
+
+		if (confirmRequired) {
+			Compensable<Serializable> service = launchHolder.service;
+			Serializable variable = launchHolder.variable;
+			XidImpl originBranchXid = this.transactionContext.getCurrentXid();
+			try {
+				this.transactionContext.setCurrentXid(launchHolder.branchXid);
+				launchHolder.confirmed = true;
+				this.transactionLogger.confirmService(this.transactionContext, launchHolder);
+				service.confirm(variable);
+				launchHolder.committed = true;// TODO 如果confirm为Never等传播属性，标记该方法已执行
+			} catch (CompensableException ex) {
+				ex.printStackTrace();
+			} catch (RuntimeException ex) {
+				ex.printStackTrace();
+			} finally {
+				this.transactionContext.setCurrentXid(originBranchXid);
+				this.transactionLogger.confirmService(this.transactionContext, launchHolder);
 			}
 
-			if (confirmRequired) {
-				Compensable<Serializable> service = launchHolder.service;
-				Serializable variable = launchHolder.variable;
-				XidImpl originBranchXid = this.transactionContext.getBranchXid();
-				try {
-					this.transactionContext.setBranchXid(launchHolder.branchXid);
-					launchHolder.confirmed = true;
-					this.transactionLogger.confirmService(this.transactionContext, launchHolder);
-					service.confirm(variable);
-					launchHolder.committed = true;// TODO 如果confirm为Never等传播属性，标记该方法已执行
-				} catch (CompensableException ex) {
-					ex.printStackTrace();
-				} catch (RuntimeException ex) {
-					ex.printStackTrace();
-				} finally {
-					this.transactionContext.setBranchXid(originBranchXid);
-					this.transactionLogger.confirmService(this.transactionContext, launchHolder);
-				}
-
-			}// end-if (confirmRequired)
-		}
+		}// end-if (confirmRequired)
 	}
 
 	public synchronized void participantCommit() throws HeuristicMixedException, HeuristicRollbackException,
@@ -733,60 +735,31 @@ public class TransactionImpl extends TransactionArchive implements Transaction {
 		while (itr.hasNext()) {
 			Map.Entry<XidImpl, CompensableArchive> entry = itr.next();
 			CompensableArchive holder = entry.getValue();
-
-			boolean confirmRequired = true;
-			if (holder.confirmed && holder.committed) {
-				committedExists = true;
-				confirmRequired = false;
-			} else if (holder.confirmed && holder.rolledback) {
-				confirmRequired = true;
-			} else if (holder.cancelled && holder.committed) {
-				rolledbackExists = true;
-				confirmRequired = false;
-			} else if (holder.cancelled && holder.rolledback) {
-				confirmRequired = true;
-			} else if (holder.tryCommitted == false && holder.variable == null) {
-				confirmRequired = false;
-			}
-
 			if (holder.launchSvc) {
-				if (confirmRequired) {
+				if (holder.confirmed && holder.committed) {
+					committedExists = true;
+				} else if (holder.cancelled && holder.committed) {
+					rolledbackExists = true;
+				} else {
 					errorExists = true;
 				}
-			} else if (confirmRequired) {
-				Compensable<Serializable> service = holder.service;
-				Serializable variable = holder.variable;
-				// boolean launch = holder.launchSvc;
-				XidImpl originBranchXid = this.transactionContext.getBranchXid();
+			} else {
 				try {
-					this.transactionContext.setBranchXid(holder.branchXid);
-					holder.confirmed = true;
-					this.transactionLogger.confirmService(this.transactionContext, holder);
-					service.confirm(variable);
-					holder.committed = true;// TODO 如果confirm为Never等传播属性，标记该方法已执行
-				} catch (CompensableException ex) {
-					ex.printStackTrace();
-				} catch (RuntimeException ex) {
-					ex.printStackTrace();
-				} finally {
-					this.transactionContext.setBranchXid(originBranchXid);
-					// if (launch) {
-					// // ignore
-					// } else
-					if (holder.committed) {
-						committedExists = true;
-					} else if (holder.rolledback) {
-						errorExists = true;
-					} else {
-						errorExists = true;
-					}
-					this.transactionLogger.commitService(this.transactionContext, holder);
+					this.confirmParticipantCompensable(holder);
+				} catch (HeuristicCommitException hcex) {
+					committedExists = true;
+				} catch (HeuristicRollbackException hrex) {
+					rolledbackExists = true;
+				} catch (SystemException ex) {
+					errorExists = true;
+				} catch (RuntimeException rex) {
+					errorExists = true;
 				}
 			}
 		}
 
 		try {
-			boolean flags = this.commitParticipant();
+			boolean flags = this.confirmParticipantTerminator();
 			if (flags) {
 				committedExists = true;
 			}
@@ -816,55 +789,97 @@ public class TransactionImpl extends TransactionArchive implements Transaction {
 
 	}
 
-	public synchronized void coordinatorRollback() {
+	private void confirmParticipantCompensable(CompensableArchive holder) throws HeuristicCommitException,
+			HeuristicRollbackException, SystemException {
+		if (holder.confirmed && holder.committed) {
+			throw new HeuristicCommitException();
 
-		CompensableArchive launchHolder = null;
+		} else if (holder.confirmed && holder.rolledback) {
+			// ignore
+		} else if (holder.cancelled && holder.committed) {
+			throw new HeuristicRollbackException();
+		} else if (holder.cancelled && holder.rolledback) {
+			// ignore
+		} else if (holder.tryCommitted == false && holder.variable == null) {
+			return;
+		}
+
+		Compensable<Serializable> service = holder.service;
+		Serializable variable = holder.variable;
+		XidImpl originBranchXid = this.transactionContext.getCurrentXid();
+		try {
+			this.transactionContext.setCurrentXid(holder.branchXid);
+			holder.confirmed = true;
+			this.transactionLogger.confirmService(this.transactionContext, holder);
+			service.confirm(variable);
+			holder.committed = true;// TODO 如果confirm为Never等传播属性，标记该方法已执行
+		} catch (CompensableException ex) {
+			ex.printStackTrace();
+		} catch (RuntimeException ex) {
+			ex.printStackTrace();
+		}
+
+		this.transactionContext.setCurrentXid(originBranchXid);
+		this.transactionLogger.commitService(this.transactionContext, holder);
+		if (holder.committed) {
+			throw new HeuristicCommitException();
+		} else if (holder.rolledback) {
+			// TODO
+			throw new SystemException();
+		} else {
+			throw new SystemException();
+		}
+
+	}
+
+	public synchronized void coordinatorRollback() {
 
 		Iterator<Map.Entry<XidImpl, CompensableArchive>> itr = this.xidToNativeSvcMap.entrySet().iterator();
 		while (itr.hasNext()) {
 			Map.Entry<XidImpl, CompensableArchive> entry = itr.next();
 			CompensableArchive holder = entry.getValue();
 			if (holder.launchSvc) {
-				launchHolder = holder;
+				this.cancelLaunchCompensable(holder);
 				break;
 			}
 		}
 
-		if (launchHolder != null) {
-			boolean cancelRequired = true;
-			if (launchHolder.confirmed && launchHolder.committed) {
-				cancelRequired = false;
-			} else if (launchHolder.confirmed && launchHolder.rolledback) {
-				cancelRequired = true;
-			} else if (launchHolder.cancelled && launchHolder.committed) {
-				cancelRequired = false;
-			} else if (launchHolder.cancelled && launchHolder.rolledback) {
-				cancelRequired = true;
-			} else if (launchHolder.tryCommitted == false && launchHolder.variable == null) {
-				cancelRequired = false;
+	}
+
+	private void cancelLaunchCompensable(CompensableArchive launchHolder) {
+		boolean cancelRequired = true;
+		if (launchHolder.confirmed && launchHolder.committed) {
+			cancelRequired = false;
+		} else if (launchHolder.confirmed && launchHolder.rolledback) {
+			cancelRequired = true;
+		} else if (launchHolder.cancelled && launchHolder.committed) {
+			cancelRequired = false;
+		} else if (launchHolder.cancelled && launchHolder.rolledback) {
+			cancelRequired = true;
+		} else if (launchHolder.tryCommitted == false && launchHolder.variable == null) {
+			cancelRequired = false;
+		}
+
+		if (cancelRequired) {
+			Compensable<Serializable> service = launchHolder.service;
+			Serializable variable = launchHolder.variable;
+			XidImpl originBranchXid = this.transactionContext.getCurrentXid();
+			try {
+				this.transactionContext.setCurrentXid(launchHolder.branchXid);
+				launchHolder.cancelled = true;
+				this.transactionLogger.cancelService(this.transactionContext, launchHolder);
+				service.cancel(variable);
+				launchHolder.committed = true;// TODO 如果cancel为Never等传播属性，标记该方法已执行
+			} catch (CompensableException ex) {
+				ex.printStackTrace();
+			} catch (RuntimeException ex) {
+				ex.printStackTrace();
+			} finally {
+				this.transactionContext.setCurrentXid(originBranchXid);
+				this.transactionLogger.cancelService(this.transactionContext, launchHolder);
 			}
 
-			if (cancelRequired) {
-				Compensable<Serializable> service = launchHolder.service;
-				Serializable variable = launchHolder.variable;
-				XidImpl originBranchXid = this.transactionContext.getBranchXid();
-				try {
-					this.transactionContext.setBranchXid(launchHolder.branchXid);
-					launchHolder.cancelled = true;
-					this.transactionLogger.cancelService(this.transactionContext, launchHolder);
-					service.cancel(variable);
-					launchHolder.committed = true;// TODO 如果cancel为Never等传播属性，标记该方法已执行
-				} catch (CompensableException ex) {
-					ex.printStackTrace();
-				} catch (RuntimeException ex) {
-					ex.printStackTrace();
-				} finally {
-					this.transactionContext.setBranchXid(originBranchXid);
-					this.transactionLogger.cancelService(this.transactionContext, launchHolder);
-				}
-
-			}// end-if (cancelRequired)
-		}
+		}// end-if (cancelRequired)
 	}
 
 	public synchronized void participantRollback() throws HeuristicMixedException, HeuristicCommitException,
@@ -877,54 +892,25 @@ public class TransactionImpl extends TransactionArchive implements Transaction {
 		while (itr.hasNext()) {
 			Map.Entry<XidImpl, CompensableArchive> entry = itr.next();
 			CompensableArchive holder = entry.getValue();
-
-			boolean cancelRequired = true;
-			if (holder.confirmed && holder.committed) {
-				committedExists = true;
-				cancelRequired = false;
-			} else if (holder.confirmed && holder.rolledback) {
-				cancelRequired = true;
-			} else if (holder.cancelled && holder.committed) {
-				rolledbackExists = true;
-				cancelRequired = false;
-			} else if (holder.cancelled && holder.rolledback) {
-				cancelRequired = true;
-			} else if (holder.tryCommitted == false && holder.variable == null) {
-				cancelRequired = false;
-			}
-
 			if (holder.launchSvc) {
-				if (cancelRequired) {
+				if (holder.confirmed && holder.committed) {
+					committedExists = true;
+				} else if (holder.cancelled && holder.committed) {
+					rolledbackExists = true;
+				} else {
 					errorExists = true;
 				}
-			} else if (cancelRequired) {
-				Compensable<Serializable> service = holder.service;
-				Serializable variable = holder.variable;
-				// boolean launch = holder.launchSvc;
-				XidImpl originBranchXid = this.transactionContext.getBranchXid();
+			} else {
 				try {
-					this.transactionContext.setBranchXid(holder.branchXid);
-					holder.cancelled = true;
-					this.transactionLogger.cancelService(this.transactionContext, holder);
-					service.cancel(variable);
-					holder.committed = true;// TODO 如果cancel为Never等传播属性，标记该方法已执行
-				} catch (CompensableException ex) {
-					ex.printStackTrace();
-				} catch (RuntimeException ex) {
-					ex.printStackTrace();
-				} finally {
-					this.transactionContext.setBranchXid(originBranchXid);
-					// if (launch) {
-					// // ignore
-					// } else
-					if (holder.committed) {
-						rolledbackExists = true;
-					} else if (holder.rolledback) {
-						errorExists = true;
-					} else {
-						errorExists = true;
-					}
-					this.transactionLogger.rollbackService(this.transactionContext, holder);
+					this.cancelParticipantCompensable(holder);
+				} catch (HeuristicCommitException hcex) {
+					committedExists = true;
+				} catch (HeuristicRollbackException hrex) {
+					rolledbackExists = true;
+				} catch (SystemException ex) {
+					errorExists = true;
+				} catch (RuntimeException rex) {
+					errorExists = true;
 				}
 			}
 		}
@@ -956,6 +942,49 @@ public class TransactionImpl extends TransactionArchive implements Transaction {
 			}
 		} else if (committedExists) {
 			throw new HeuristicCommitException();
+		}
+
+	}
+
+	private void cancelParticipantCompensable(CompensableArchive holder) throws HeuristicCommitException,
+			HeuristicRollbackException, SystemException {
+		if (holder.confirmed && holder.committed) {
+			throw new HeuristicCommitException();
+		} else if (holder.confirmed && holder.rolledback) {
+			// ignore
+		} else if (holder.cancelled && holder.committed) {
+			throw new HeuristicRollbackException();
+		} else if (holder.cancelled && holder.rolledback) {
+			// ignore
+		} else if (holder.tryCommitted == false && holder.variable == null) {
+			return;
+		}
+
+		Compensable<Serializable> service = holder.service;
+		Serializable variable = holder.variable;
+		// boolean launch = holder.launchSvc;
+		XidImpl originBranchXid = this.transactionContext.getCurrentXid();
+		try {
+			this.transactionContext.setCurrentXid(holder.branchXid);
+			holder.cancelled = true;
+			this.transactionLogger.cancelService(this.transactionContext, holder);
+			service.cancel(variable);
+			holder.committed = true;// TODO 如果cancel为Never等传播属性，标记该方法已执行
+		} catch (CompensableException ex) {
+			ex.printStackTrace();
+		} catch (RuntimeException ex) {
+			ex.printStackTrace();
+		}
+
+		this.transactionContext.setCurrentXid(originBranchXid);
+		this.transactionLogger.rollbackService(this.transactionContext, holder);
+
+		if (holder.committed) {
+			throw new HeuristicRollbackException();
+		} else if (holder.rolledback) {
+			throw new SystemException();
+		} else {
+			throw new SystemException();
 		}
 
 	}
@@ -1001,8 +1030,7 @@ public class TransactionImpl extends TransactionArchive implements Transaction {
 
 	public synchronized boolean enlistService(Compensable<Serializable> service) throws IllegalStateException,
 			SystemException {
-		XidImpl globalXid = this.transactionContext.getGlobalXid();
-		XidImpl branchXid = this.transactionContext.getBranchXid();
+		XidImpl branchXid = this.transactionContext.getCurrentXid();
 		CompensableArchive svcHolder = this.xidToNativeSvcMap.get(branchXid);
 		if (svcHolder == null) {
 			compensableContext.setTransactionContext(this.transactionContext);
@@ -1010,6 +1038,8 @@ public class TransactionImpl extends TransactionArchive implements Transaction {
 			compensableContext.setBranchXid(branchXid);
 
 			logger.info(String.format("[%s] enlist-service", this.transactionContext.getGlobalXid()));
+
+			XidImpl globalXid = this.transactionContext.getGlobalXid();
 
 			svcHolder = new CompensableArchive();
 			svcHolder.branchXid = branchXid;
@@ -1029,7 +1059,7 @@ public class TransactionImpl extends TransactionArchive implements Transaction {
 	}
 
 	public synchronized boolean delistCurrentService() throws IllegalStateException, SystemException {
-		XidImpl branchXid = this.transactionContext.getBranchXid();
+		XidImpl branchXid = this.transactionContext.getCurrentXid();
 		CompensableArchive svcHolder = this.xidToNativeSvcMap.get(branchXid);
 		if (svcHolder == null) {
 			return false;
@@ -1083,13 +1113,13 @@ public class TransactionImpl extends TransactionArchive implements Transaction {
 	}
 
 	public synchronized void suspendAllResource() throws IllegalStateException, SystemException {
-		XidImpl branchXid = this.transactionContext.getBranchXid();
+		XidImpl branchXid = this.transactionContext.getCurrentXid();
 		JtaTransactionImpl internalTransaction = this.internalTxnMap.get(branchXid);
 		internalTransaction.suspendAllResource();
 	}
 
 	public synchronized void resumeAllResource() throws IllegalStateException, SystemException {
-		XidImpl branchXid = this.transactionContext.getBranchXid();
+		XidImpl branchXid = this.transactionContext.getCurrentXid();
 		JtaTransactionImpl internalTransaction = this.internalTxnMap.get(branchXid);
 		internalTransaction.resumeAllResource();
 	}
@@ -1143,7 +1173,7 @@ public class TransactionImpl extends TransactionArchive implements Transaction {
 	}
 
 	public JtaTransactionImpl associateInternalTransaction() {
-		XidImpl branchXid = this.transactionContext.getBranchXid();
+		XidImpl branchXid = this.transactionContext.getCurrentXid();
 		JtaTransactionImpl internal = new JtaTransactionImpl(this.transactionContext);
 		internal.setXidFactory(this.transactionManager.getXidFactory());
 		internal.initialize();
@@ -1152,12 +1182,12 @@ public class TransactionImpl extends TransactionArchive implements Transaction {
 	}
 
 	public JtaTransactionImpl unassociateInternalTransaction() {
-		XidImpl branchXid = this.transactionContext.getBranchXid();
+		XidImpl branchXid = this.transactionContext.getCurrentXid();
 		return this.internalTxnMap.remove(branchXid);
 	}
 
 	public JtaTransactionImpl getInternalTransaction() {
-		XidImpl branchXid = this.transactionContext.getBranchXid();
+		XidImpl branchXid = this.transactionContext.getCurrentXid();
 		return this.internalTxnMap.get(branchXid);
 	}
 
@@ -1227,7 +1257,7 @@ public class TransactionImpl extends TransactionArchive implements Transaction {
 		if (this.transactionContext == null) {
 			return hash;
 		}
-		XidImpl branchXid = this.transactionContext.getBranchXid();
+		XidImpl branchXid = this.transactionContext.getGlobalXid();
 		hash += 31 * ((branchXid == null) ? 0 : branchXid.hashCode());
 		return hash;
 	}
@@ -1247,8 +1277,8 @@ public class TransactionImpl extends TransactionArchive implements Transaction {
 		} else if (thisTransactionContext == null || thatTransactionContext == null) {
 			return false;
 		}
-		XidImpl thisBranchXid = thisTransactionContext.getBranchXid();
-		XidImpl thatBranchXid = thatTransactionContext.getBranchXid();
+		XidImpl thisBranchXid = thisTransactionContext.getGlobalXid();
+		XidImpl thatBranchXid = thatTransactionContext.getGlobalXid();
 		return CommonUtils.equals(thisBranchXid, thatBranchXid);
 	}
 

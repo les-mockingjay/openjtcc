@@ -19,6 +19,7 @@ import java.io.Serializable;
 import java.lang.reflect.Proxy;
 import java.util.concurrent.atomic.AtomicLong;
 
+import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
 
 import org.bytesoft.openjtcc.Compensable;
@@ -38,6 +39,18 @@ public class NativeBeanFactoryImpl implements NativeBeanFactory, ApplicationCont
 		if (interfaceClass.isInstance(beanInst) //
 				&& Compensable.class.isInstance(beanInst)//
 		) {
+			if (this.transactionManager == null) {
+				throw new RuntimeException();
+			}
+
+			try {
+				if (this.transactionManager.getTransaction() != null) {
+					throw new RuntimeException();
+				}
+			} catch (SystemException ex) {
+				throw new RuntimeException(ex);
+			}
+
 			NativeCompensableProxy<Serializable> proxy = new NativeCompensableProxy<Serializable>();
 			proxy.setBeanName(beanId);
 			proxy.setTarget((Compensable<Serializable>) beanInst);

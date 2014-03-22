@@ -124,7 +124,6 @@
 	<bean id="remoteInvocationInterceptor" class="org.bytesoft.openjtcc.supports.internal.RemoteInvocationInterceptorImpl">
 		<property name="transactionManager" ref="tccTransactionManager" />
 		<property name="terminatorMarshaller" ref="terminatorMarshaller" />
-		<property name="xidFactory" ref="xidFactory" />
 	</bean>
 
 </beans>
