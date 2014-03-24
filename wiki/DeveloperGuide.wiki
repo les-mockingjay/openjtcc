@@ -8,7 +8,7 @@ OpenJTCC主要由tcc-compensable、tcc-core、tcc-supports三部分构成，其�
 
 = OpenJTCC配置 =
 
-=== Spring ===
+=== Spring配置 ===
 {{{
 <!-- openjtcc.xml位于tcc-supports.jar包中，如无修改不需取出，直接import即可 -->
 <import resource="classpath:openjtcc.xml" />
@@ -39,12 +39,10 @@ OpenJTCC主要由tcc-compensable、tcc-core、tcc-supports三部分构成，其�
 -->
 }}}
 
+=== Dubbo配置 ===
 
-
-=== Dubbo ===
-
-===== 默认配置文件openjtcc.properties =====
-openjtcc.xml文件中配置默认加载openjtcc.properties文件，该文件需要提供如下几个配置项：
+===== 默认属性文件openjtcc.properties =====
+openjtcc.xml文件中配置了默认加载openjtcc.properties属性文件，该文件需要提供如下几个配置项：
 {{{
 tcc.application=tcc-demo4dubbo-server
 tcc.endpoint=default
@@ -67,6 +65,9 @@ tcc.timeout为事务超时时间（单位：秒）。
 ===== Dubbo客户端应用配置 =====
 {{{
 <dubbo:reference id="remote-service" check="true" loadbalance="random" interface="org.bytesoft.openjtcc.supports.dubbo.RemoteInvocationService" />
+}}}
+
+{{{
 <dubbo:reference id="tcc-demo4dubbo-server-remote-service" check="true" url="dubbo://${tcc-server-appname}:${tcc-server-appport}" interface="org.bytesoft.openjtcc.supports.dubbo.RemoteInvocationService" />
 <dubbo:reference id="tcc-demo4dubbo-server-default-remote-service" check="true" url="dubbo://${tcc-server-appname}:${tcc-server-appport}" interface="org.bytesoft.openjtcc.supports.dubbo.RemoteInvocationService" />
 }}}
