@@ -16,8 +16,8 @@ create table TCC_TRANSACTION (
 );
 
 create table TCC_COMPENSABLE (
-  application        VARCHAR2(60),not null,
-  endpoint           VARCHAR2(60),not null,
+  application        VARCHAR2(60) not null,
+  endpoint           VARCHAR2(60) not null,
   global_tx_id       VARCHAR2(36) not null,
   branch_qualifier   VARCHAR2(20) not null,
   coordinator        INTEGER default 0,
@@ -32,8 +32,8 @@ create table TCC_COMPENSABLE (
 );
 
 create table TCC_TERMINATOR (
-  application    VARCHAR2(60),not null,
-  endpoint       VARCHAR2(60),not null,
+  application    VARCHAR2(60) not null,
+  endpoint       VARCHAR2(60) not null,
   global_tx_id   VARCHAR2(36) not null,
   to_application VARCHAR2(60) not null,
   to_endpoint    VARCHAR2(60) not null,
