@@ -1,4 +1,4 @@
-# 开发手册
+#Developer's Guide
 
 = OpenJTCC构成 =
 OpenJTCC主要由tcc-compensable、tcc-core、tcc-supports三部分构成，其中：
