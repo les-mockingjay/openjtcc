@@ -87,11 +87,11 @@ tcc.timeout为事务超时时间（单位：秒）。
 === 本地Service ===
 
 ===== 约束 =====
-# 业务接口方法定义中必须抛出CompensableException异常；
-# 业务实现类必须实现业务接口、Compensable接口；
-# 业务实现中必须注入CompensableContext（在openjtcc.xml中定义，beanId为compensableContext）；
-# 推荐使用注解来定义事务传播属性（在业务接口和Compensable接口定义的方法上）；
-# Try方法中必须通过CompensableContext.setCompensableVariable(Serializable)方法来设置用于Confirm/Cancel的参数。该参数将在调用Compensable.confirm(Serializable)/Compensable.cancel(Serializable)时提供给业务实现类。
+  # 业务接口方法定义中必须抛出CompensableException异常；
+  # 业务实现类必须实现业务接口、Compensable接口；
+  # 业务实现中必须注入CompensableContext（在openjtcc.xml中定义，beanId为compensableContext）；
+  # 推荐使用注解来定义事务传播属性（在业务接口和Compensable接口定义的方法上）；
+  # Try方法中必须通过CompensableContext.setCompensableVariable(Serializable)方法来设置用于Confirm/Cancel的参数。该参数将在调用Compensable.confirm(Serializable)/Compensable.cancel(Serializable)时提供给业务实现类。
 
 ===== 本地Service：业务接口 =====
 {{{
