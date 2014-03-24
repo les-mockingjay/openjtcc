@@ -174,8 +174,7 @@ public class NativeAccountServiceImpl<T extends NativeTransferVariable> implemen
 除上文（本地Service调用中）定义的约束外，
   # 远程Service业务接口的方法定义中必须抛出CompensableException和RemoteException异常；
   # 客户端应用中需要注入RemoteBeanFactory；
-  # 客户端应用必须通过RemoteBeanFactory来获取远程Service的引用，例如：RemoteAccountService remoteAccountService = this.defaultBeanFactory.getBean(RemoteAccountService.class,
-				"remoteAccountService")；
+  # 客户端应用必须通过RemoteBeanFactory来获取远程Service的引用；
   # 客户端应用在confirm/cancel时，仅需要confirm/cancel自己的操作即可，不需要confirm/cancel远程Service（远程Service的confirm/cancel操作由远程Service所在端点的事务管理器自行调度）。
 
 ===== 远程Service调用：server业务接口 =====
