@@ -84,7 +84,7 @@ tcc.timeout为事务超时时间（单位：秒）。
 
 = 应用程序开发 =
 说明：业务接口定义的方法下文中简称Try方法。
-=== 本地Service ===
+=== 本地Service调用 ===
 
 ===== 约束 =====
   # 业务接口方法定义中必须抛出CompensableException异常；
@@ -93,13 +93,13 @@ tcc.timeout为事务超时时间（单位：秒）。
   # 推荐使用注解来定义事务传播属性（在业务接口和Compensable接口定义的方法上）；
   # Try方法中必须通过CompensableContext.setCompensableVariable(Serializable)方法来设置用于Confirm/Cancel的参数。该参数将在调用Compensable.confirm(Serializable)/Compensable.cancel(Serializable)时提供给业务实现类。
 
-===== 本地Service：业务接口 =====
+===== 本地Service调用：业务接口 =====
 {{{
 public interface NativeAccountService {
 	public void transfer(String fromAccountId, String toAccountId, double amount) throws CompensableException, AccountException;
 }
 }}}
-===== 本地Service：业务实现 =====
+===== 本地Service调用：业务实现 =====
 {{{
 public class NativeAccountServiceImpl<T extends NativeTransferVariable> implements NativeAccountService, Compensable<T> {
 
@@ -164,5 +164,222 @@ public class NativeAccountServiceImpl<T extends NativeTransferVariable> implemen
 	public void setCompensableContext(CompensableContext<T> compensableContext) {
 		this.compensableContext = compensableContext;
 	}
+}
+}}}
+
+
+=== 远程Service调用 ===
+
+===== 远程Service调用：server业务接口 =====
+{{{
+public interface RemoteAccountService {
+	public void transferIn(String accountId, double amount) throws AccountException, RemoteException;
+	public void transferOut(String accountId, double amount) throws AccountException, RemoteException;
+}
+}}}
+
+===== 远程Service调用：server业务实现 =====
+{{{
+public class RemoteAccountServiceImpl<T extends ServerTransferVariable> implements RemoteAccountService, Compensable<T> {
+
+	private AccountDao accountDao;
+	private CompensableContext<T> compensableContext;
+
+	@SuppressWarnings("unchecked")
+	@Transactional(propagation = Propagation.REQUIRED)
+	public void transferIn(String accountId, double amount) throws AccountException {
+		String transferId = this.accountDao.transferInAccount(accountId, amount);
+		ServerTransferVariable variable = new ServerTransferVariable();
+		variable.setTransferId(transferId);
+		variable.setTransferOut(false);
+		this.compensableContext.setCompensableVariable((T) variable);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Transactional(propagation = Propagation.REQUIRED)
+	public void transferOut(String accountId, double amount) throws AccountException {
+		String transferId = this.accountDao.transferOutAccount(accountId, amount);
+		ServerTransferVariable variable = new ServerTransferVariable();
+		variable.setTransferId(transferId);
+		variable.setTransferOut(true);
+		this.compensableContext.setCompensableVariable((T) variable);
+	}
+
+	@Transactional(propagation = Propagation.REQUIRED)
+	public void cancel(ServerTransferVariable variable) throws CompensableException {
+		String transferId = variable.getTransferId();
+		if (variable.isTransferOut()) {
+			this.accountDao.cancelTransferOutAccount(transferId);
+		} else {
+			this.accountDao.cancelTransferInAccount(transferId);
+		}
+	}
+
+	@Transactional(propagation = Propagation.REQUIRED)
+	public void confirm(ServerTransferVariable variable) throws CompensableException {
+		String transferId = variable.getTransferId();
+		if (variable.isTransferOut()) {
+			this.accountDao.confirmTransferOutAccount(transferId);
+		} else {
+			this.accountDao.confirmTransferInAccount(transferId);
+		}
+	}
+
+	static class ServerTransferVariable implements Serializable {
+		private static final long serialVersionUID = 1L;
+
+		private boolean transferOut;
+		private String transferId;
+
+		public boolean isTransferOut() {
+			return transferOut;
+		}
+
+		public void setTransferOut(boolean transferOut) {
+			this.transferOut = transferOut;
+		}
+
+		public String getTransferId() {
+			return transferId;
+		}
+
+		public void setTransferId(String transferId) {
+			this.transferId = transferId;
+		}
+
+	}
+
+	public void setAccountDao(AccountDao accountDao) {
+		this.accountDao = accountDao;
+	}
+
+	public void setCompensableContext(CompensableContext<T> compensableContext) {
+		this.compensableContext = compensableContext;
+	}
+
+}
+}}}
+
+===== 远程Service调用：client业务接口 =====
+{{{
+public interface AccountTransferService {
+	public void nativeAccountTransferInToRemoteAccount(String fromAccountId, String toAccountId, double amount)
+			throws AccountException;
+	public void remoteAccountTransferInToNativeAccount(String fromAccountId, String toAccountId, double amount)
+			throws AccountException;
+}
+}}}
+
+
+===== 远程Service调用：client业务实现 =====
+{{{
+public class AccountTransferServiceImpl<T extends TransferVariable> implements AccountTransferService, Compensable<T> {
+
+	private AccountDao accountDao;
+	private CompensableContext<T> compensableContext;
+	private RemoteBeanFactory defaultBeanFactory;
+
+	@SuppressWarnings("unchecked")
+	@Transactional(propagation = Propagation.REQUIRED)
+	public void nativeAccountTransferInToRemoteAccount(String fromAccountId, String toAccountId, double amount)
+			throws AccountException {
+
+		String transferId = this.accountDao.transferOutAccount(fromAccountId, amount);
+
+		RemoteAccountService remoteAccountService = this.defaultBeanFactory.getBean(RemoteAccountService.class,
+				"remoteAccountService");
+		try {
+			remoteAccountService.transferIn(toAccountId, amount);
+		} catch (RemoteException ex) {
+			throw new AccountException(ex);
+		}
+
+		TransferVariable variable = new TransferVariable();
+		variable.setNativeAccountOut(true);
+		variable.setTransferId(transferId);
+
+		this.compensableContext.setCompensableVariable((T) variable);
+
+	}
+
+	@SuppressWarnings("unchecked")
+	@Transactional(propagation = Propagation.REQUIRED)
+	public void remoteAccountTransferInToNativeAccount(String fromAccountId, String toAccountId, double amount)
+			throws AccountException {
+
+		String transferId = this.accountDao.transferInAccount(fromAccountId, amount);
+
+		RemoteAccountService remoteAccountService = this.defaultBeanFactory.getBean(RemoteAccountService.class,
+				"remoteAccountService");
+		try {
+			remoteAccountService.transferOut(toAccountId, amount);
+		} catch (RemoteException ex) {
+			throw new AccountException(ex);
+		}
+
+		TransferVariable variable = new TransferVariable();
+		variable.setNativeAccountOut(false);
+		variable.setTransferId(transferId);
+
+		this.compensableContext.setCompensableVariable((T) variable);
+
+	}
+
+	@Transactional(propagation = Propagation.REQUIRED)
+	public void cancel(TransferVariable variable) throws CompensableException {
+		String transferId = variable.getTransferId();
+		if (variable.isNativeAccountOut()) {
+			this.accountDao.cancelTransferOutAccount(transferId);
+		} else {
+			this.accountDao.cancelTransferInAccount(transferId);
+		}
+	}
+
+	@Transactional(propagation = Propagation.REQUIRED)
+	public void confirm(TransferVariable variable) throws CompensableException {
+		String transferId = variable.getTransferId();
+		if (variable.isNativeAccountOut()) {
+			this.accountDao.confirmTransferOutAccount(transferId);
+		} else {
+			this.accountDao.confirmTransferInAccount(transferId);
+		}
+	}
+
+	static class TransferVariable implements Serializable {
+		private static final long serialVersionUID = 1L;
+
+		private boolean nativeAccountOut;
+		private String transferId;
+
+		public boolean isNativeAccountOut() {
+			return nativeAccountOut;
+		}
+
+		public void setNativeAccountOut(boolean nativeAccountOut) {
+			this.nativeAccountOut = nativeAccountOut;
+		}
+
+		public String getTransferId() {
+			return transferId;
+		}
+
+		public void setTransferId(String transferId) {
+			this.transferId = transferId;
+		}
+
+	}
+
+	public void setAccountDao(AccountDao accountDao) {
+		this.accountDao = accountDao;
+	}
+
+	public void setCompensableContext(CompensableContext<T> compensableContext) {
+		this.compensableContext = compensableContext;
+	}
+
+	public void setDefaultBeanFactory(RemoteBeanFactory defaultBeanFactory) {
+		this.defaultBeanFactory = defaultBeanFactory;
+	}
+
 }
 }}}
