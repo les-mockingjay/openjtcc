@@ -58,10 +58,12 @@ OpenJTCC主要由tcc-compensable、tcc-core、tcc-supports三部分构成，其�
 
 {{{
 <!-- 使用druid -->
+<!--
 <bean id="dataSource" class="org.bytesoft.openjtcc.supports.druid.DruidLocalXADataSource">
 	<property name="druidDataSource" ref="loggerDataSource" />
 	<property name="transactionManager" ref="tccTransactionManager" />
 </bean>
+-->
 }}}
 === Dubbo配置 ===
 
