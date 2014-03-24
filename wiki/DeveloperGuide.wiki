@@ -39,7 +39,7 @@ OpenJTCC主要由tcc-compensable、tcc-core、tcc-supports三部分构成，其�
 -->
 }}}
 
-=== dbcp/druid配置 ===
+=== DB数据源配置（dbcp/druid） ===
 {{{
 <!-- 使用dbcp -->
 <bean id="dataSource" class="org.apache.commons.dbcp.managed.BasicManagedDataSource"
