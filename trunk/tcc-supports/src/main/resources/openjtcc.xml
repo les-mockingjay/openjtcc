@@ -64,21 +64,21 @@
 		<property name="beanFactory" ref="nativeBeanFactory" />
 	</bean>
 
-	<bean id="compensableContext" class="org.bytesoft.openjtcc.supports.spring.bean.CompensableContextProxy">
+	<bean id="compensableContext" class="org.bytesoft.openjtcc.supports.CompensableContextProxy">
 		<property name="transactionManager" ref="tccTransactionManager" />
 	</bean>
 
-	<bean id="remoteBeanFactory" class="org.bytesoft.openjtcc.supports.spring.beanfactory.RemoteBeanFactoryImpl">
+	<bean id="remoteBeanFactory" class="org.bytesoft.openjtcc.supports.spring.RemoteBeanFactoryImpl">
 		<property name="transactionManager" ref="tccTransactionManager" />
 		<property name="remoteInvocationInterceptor" ref="remoteInvocationInterceptor" />
 		<property name="remoteInvocationServiceFactory" ref="remoteInvocationServiceFactory" />
 	</bean>
 
-	<bean id="nativeBeanFactory" class="org.bytesoft.openjtcc.supports.spring.beanfactory.NativeBeanFactoryImpl">
+	<bean id="nativeBeanFactory" class="org.bytesoft.openjtcc.supports.spring.NativeBeanFactoryImpl">
 		<property name="transactionManager" ref="tccTransactionManager" />
 	</bean>
 
-	<bean id="propagateBeanFactory" class="org.bytesoft.openjtcc.supports.spring.beanfactory.PropagateBeanFactoryImpl">
+	<bean id="propagateBeanFactory" class="org.bytesoft.openjtcc.supports.spring.PropagateBeanFactoryImpl">
 		<property name="transactionManager" ref="tccTransactionManager" />
 	</bean>
 

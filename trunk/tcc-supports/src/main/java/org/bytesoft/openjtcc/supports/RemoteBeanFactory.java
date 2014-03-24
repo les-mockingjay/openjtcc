@@ -13,10 +13,8 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this distribution; if not, see <http://www.gnu.org/licenses/>.
  */
-package org.bytesoft.openjtcc.supports.spring.beanfactory;
+package org.bytesoft.openjtcc.supports;
 
-public interface NativeBeanFactory {
-
-	public <T> T getBean(Class<T> interfaceClass, String beanId);
-
+public interface RemoteBeanFactory {
+	public <T> T getBean(Class<T> interfaceClass, String beanId) throws RuntimeException;
 }

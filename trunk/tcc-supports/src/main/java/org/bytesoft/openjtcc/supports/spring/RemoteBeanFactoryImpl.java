@@ -13,13 +13,14 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this distribution; if not, see <http://www.gnu.org/licenses/>.
  */
-package org.bytesoft.openjtcc.supports.spring.beanfactory;
+package org.bytesoft.openjtcc.supports.spring;
 
 import java.lang.reflect.Proxy;
 
 import javax.transaction.TransactionManager;
 
 import org.bytesoft.openjtcc.common.TerminalKey;
+import org.bytesoft.openjtcc.supports.RemoteBeanFactory;
 import org.bytesoft.openjtcc.supports.dubbo.RemoteInvocationServiceFactory;
 import org.bytesoft.openjtcc.supports.dubbo.internal.RemoteInvocationClientInvoker;
 import org.bytesoft.openjtcc.supports.rmi.RemoteInvocationInterceptor;
