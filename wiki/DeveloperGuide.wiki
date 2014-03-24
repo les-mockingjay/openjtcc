@@ -39,6 +39,30 @@ OpenJTCC主要由tcc-compensable、tcc-core、tcc-supports三部分构成，其�
 -->
 }}}
 
+=== dbcp/druid配置 ===
+{{{
+<!-- 使用dbcp -->
+<bean id="dataSource" class="org.apache.commons.dbcp.managed.BasicManagedDataSource"
+		destroy-method="close">
+	<property name="transactionManager" ref="tccTransactionManager" />
+
+	<property name="driverClassName" value="oracle.jdbc.driver.OracleDriver" />
+	<property name="url" value="jdbc:oracle:thin:@192.168.29.213:1521:hshdb" />
+	<property name="username" value="ptz2" />
+	<property name="password" value="ptz2" />
+	<property name="maxActive" value="20" />
+	<property name="maxIdle" value="4" />
+	<property name="maxWait" value="4" />
+</bean>
+}}}
+
+{{{
+<!-- 使用druid -->
+<bean id="dataSource" class="org.bytesoft.openjtcc.supports.druid.DruidLocalXADataSource">
+	<property name="druidDataSource" ref="loggerDataSource" />
+	<property name="transactionManager" ref="tccTransactionManager" />
+</bean>
+}}}
 === Dubbo配置 ===
 
 ===== 默认属性文件openjtcc.properties =====
