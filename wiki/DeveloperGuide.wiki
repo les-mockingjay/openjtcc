@@ -11,8 +11,10 @@ Add your content here.  Format your content with:
 
 === spring ===
 {{{
+<!-- openjtcc.xml位于tcc-supports.jar包中，如无修改不需取出，直接import即可 -->
 <import resource="classpath:openjtcc.xml" />
 
+<!-- 使用数据库来记录事务日志时，需要配置loggerDataSource（默认为loggerDataSource，名称需与openjtcc.xml中保持一致） -->
 <!-- dbcp -->
 <bean id="loggerDataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
 	<property name="driverClassName" value="oracle.jdbc.driver.OracleDriver" />
