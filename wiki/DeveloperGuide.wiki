@@ -82,4 +82,77 @@ tcc.timeout为事务超时时间（单位：秒）。
 }}}
 
 
-===== 应用程序开发 =====
+= 应用程序开发 =
+=== 本地Service ===
+
+===== 本地Service：接口 =====
+{{{
+public interface NativeAccountService {
+	public void transfer(String fromAccountId, String toAccountId, double amount) throws AccountException;
+}
+}}}
+===== 本地Service：实现 =====
+public class NativeAccountServiceImpl<T extends NativeTransferVariable> implements NativeAccountService, Compensable<T> {
+
+	private AccountDao accountDao;
+	private CompensableContext<T> compensableContext;
+
+	@SuppressWarnings("unchecked")
+	@Transactional(propagation = Propagation.REQUIRED)
+	public void transfer(String fromAccountId, String toAccountId, double amount) throws AccountException {
+		String fromTransferId = this.accountDao.transferOutAccount(fromAccountId, amount);
+		String toTransferId = this.accountDao.transferInAccount(toAccountId, amount);
+		NativeTransferVariable variable = new NativeTransferVariable();
+		variable.setFromTransferId(fromTransferId);
+		variable.setToTransferId(toTransferId);
+		this.compensableContext.setCompensableVariable((T) variable);
+	}
+
+	@Transactional(propagation = Propagation.REQUIRED)
+	public void cancel(NativeTransferVariable variable) throws CompensableException {
+		String fromTransferId = variable.getFromTransferId();
+		String toTransferId = variable.getToTransferId();
+		this.accountDao.cancelTransferOutAccount(fromTransferId);
+		this.accountDao.cancelTransferInAccount(toTransferId);
+	}
+
+	@Transactional(propagation = Propagation.REQUIRED)
+	public void confirm(NativeTransferVariable variable) throws CompensableException {
+		String fromTransferId = variable.getFromTransferId();
+		String toTransferId = variable.getToTransferId();
+		this.accountDao.confirmTransferOutAccount(fromTransferId);
+		this.accountDao.confirmTransferInAccount(toTransferId);
+	}
+
+	static class NativeTransferVariable implements Serializable {
+		private static final long serialVersionUID = 1L;
+
+		private String fromTransferId;
+		private String toTransferId;
+
+		public String getToTransferId() {
+			return toTransferId;
+		}
+
+		public void setToTransferId(String toTransferId) {
+			this.toTransferId = toTransferId;
+		}
+
+		public String getFromTransferId() {
+			return fromTransferId;
+		}
+
+		public void setFromTransferId(String fromTransferId) {
+			this.fromTransferId = fromTransferId;
+		}
+
+	}
+
+	public void setAccountDao(AccountDao accountDao) {
+		this.accountDao = accountDao;
+	}
+
+	public void setCompensableContext(CompensableContext<T> compensableContext) {
+		this.compensableContext = compensableContext;
+	}
+}
