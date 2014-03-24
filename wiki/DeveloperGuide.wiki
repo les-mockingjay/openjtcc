@@ -13,6 +13,16 @@ Add your content here.  Format your content with:
 {{{
 <import resource="classpath:openjtcc.xml" />
 
+<!-- dbcp -->
+<bean id="loggerDataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+	<property name="driverClassName" value="oracle.jdbc.driver.OracleDriver" />
+	<property name="url" value="jdbc:oracle:thin:@192.168.29.213:1521:hshdb" />
+	<property name="username" value="ptz1" />
+	<property name="password" value="ptz1" />
+</bean>
+
+<!-- druid -->
+<!--
 <bean id="loggerDataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
 	<property name="url" value="jdbc:oracle:thin:@192.168.29.213:1521:hshdb" />
 	<property name="username" value="ptz1" />
@@ -25,6 +35,7 @@ Add your content here.  Format your content with:
 	<property name="maxWait" value="60000" />
 	<property name="minIdle" value="2" />
 </bean>
+-->
 }}}
 
 === dubbo ===
