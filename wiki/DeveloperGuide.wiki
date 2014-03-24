@@ -1,0 +1,65 @@
+#summary 开发手册
+
+= OpenJTCC构成 =
+OpenJTCC主要由tcc-compensable、tcc-core、tcc-supports三部分构成，其中：
+Add your content here.  Format your content with:
+  * tcc-compensable定义了tcc与应用程序相关的接口；
+  * tcc-core为openjtcc事务管理器的实现；
+  * tcc-supports用于集成spring、rpc框架（如Dubbo）、DB连接池（如dbcp、druid）。
+
+= OpenJTCC配置 =
+
+=== spring ===
+{{{
+<!-- openjtcc.xml位于tcc-supports.jar包中，如无修改不需取出，直接import即可 -->
+<import resource="classpath:openjtcc.xml" />
+
+<!-- 使用数据库来记录事务日志（目前唯一可选项）时，需要配置数据源（默认为loggerDataSource，名称需与openjtcc.xml中保持一致） -->
+<!-- 使用dbcp -->
+<bean id="loggerDataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+	<property name="driverClassName" value="oracle.jdbc.driver.OracleDriver" />
+	<property name="url" value="jdbc:oracle:thin:@192.168.29.213:1521:hshdb" />
+	<property name="username" value="ptz1" />
+	<property name="password" value="ptz1" />
+</bean>
+
+<!-- 使用druid -->
+<!--
+<bean id="loggerDataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
+	<property name="url" value="jdbc:oracle:thin:@192.168.29.213:1521:hshdb" />
+	<property name="username" value="ptz1" />
+	<property name="password" value="ptz1" />
+
+	<property name="filters" value="stat" />
+
+	<property name="maxActive" value="4" />
+	<property name="initialSize" value="2" />
+	<property name="maxWait" value="60000" />
+	<property name="minIdle" value="2" />
+</bean>
+-->
+}}}
+
+=== dubbo ===
+===== dubbo基础配置 =====
+{{{
+<dubbo:application name="${tcc.application}" />
+<dubbo:consumer timeout="60000" retries="0" />
+<dubbo:registry address="multicast://224.5.6.7:23421" />
+<dubbo:protocol name="dubbo" port="20881" />
+<dubbo:service ref="remoteInvocationService" interface="org.bytesoft.openjtcc.supports.dubbo.RemoteInvocationService" />
+}}}
+
+===== dubbo客户端应用配置 =====
+{{{
+<dubbo:reference id="remote-service" check="true" loadbalance="random" interface="org.bytesoft.openjtcc.supports.dubbo.RemoteInvocationService" />
+<dubbo:reference id="tcc-demo4dubbo-server-remote-service" check="true" url="dubbo://${tcc-server-appname}:${tcc-server-appport}" interface="org.bytesoft.openjtcc.supports.dubbo.RemoteInvocationService" />
+<dubbo:reference id="tcc-demo4dubbo-server-default-remote-service" check="true" url="dubbo://${tcc-server-appname}:${tcc-server-appport}" interface="org.bytesoft.openjtcc.supports.dubbo.RemoteInvocationService" />
+}}}
+
+=== openjtcc.properties ===
+{{{
+tcc.application=tcc-demo4dubbo-server
+tcc.endpoint=default
+tcc.timeout=300
+}}}
