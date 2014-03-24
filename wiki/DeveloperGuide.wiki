@@ -405,3 +405,15 @@ public class AccountTransferServiceImpl<T extends TransferVariable> implements A
 
 }
 }}}
+
+= 异常 =
+=== CompensableCommittingException异常 ===
+当业务调用捕获到CompensableCommittingException时，表示事务管理器已正在提交TCC事务（尚未提交或已部分提交），但由于某些原因（如网络故障等）当前提交时出错，后续当继续尝试完成提交操作。
+
+=== 启发式异常 ===
+事务管理器可抛出的启发式异常有：HeuristicRollbackException，HeuristicMixedException，该异常会被容器/Spring封装后抛出，如org.springframework.transaction.HeuristicCompletionException为由Spring抛出的启发式异常，请参考Spring的定义来判断事务是否提交/回滚。
+
+*** RollbackException
+
+=== 其他异常 ===
+根据容器/Spring对应用程序异常的支持，以及应用程序配置的回滚策略，判断事务管理器是否提交/回滚事务。
