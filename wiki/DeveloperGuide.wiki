@@ -92,6 +92,7 @@ public interface NativeAccountService {
 }
 }}}
 ===== 本地Service：实现 =====
+{{{
 public class NativeAccountServiceImpl<T extends NativeTransferVariable> implements NativeAccountService, Compensable<T> {
 
 	private AccountDao accountDao;
@@ -156,3 +157,4 @@ public class NativeAccountServiceImpl<T extends NativeTransferVariable> implemen
 		this.compensableContext = compensableContext;
 	}
 }
+}}}
