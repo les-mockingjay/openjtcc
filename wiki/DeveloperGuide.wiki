@@ -2,7 +2,6 @@
 
 = OpenJTCC构成 =
 OpenJTCC主要由tcc-compensable、tcc-core、tcc-supports三部分构成，其中：
-Add your content here.  Format your content with:
   * tcc-compensable定义了tcc与应用程序相关的接口；
   * tcc-core为openjtcc事务管理器的实现；
   * tcc-supports用于集成spring、rpc框架（如Dubbo）、DB连接池（如dbcp、druid）。
