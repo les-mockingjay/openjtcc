@@ -66,8 +66,10 @@ tcc.timeout为事务超时时间（单位：秒）。
 {{{
 <dubbo:reference id="remote-service" check="true" loadbalance="random" interface="org.bytesoft.openjtcc.supports.dubbo.RemoteInvocationService" />
 }}}
+必须提供一个id为remote-service的配置。
 
 {{{
 <dubbo:reference id="tcc-demo4dubbo-server-remote-service" check="true" url="dubbo://${tcc-server-appname}:${tcc-server-appport}" interface="org.bytesoft.openjtcc.supports.dubbo.RemoteInvocationService" />
 <dubbo:reference id="tcc-demo4dubbo-server-default-remote-service" check="true" url="dubbo://${tcc-server-appname}:${tcc-server-appport}" interface="org.bytesoft.openjtcc.supports.dubbo.RemoteInvocationService" />
 }}}
+如上例，假设客户端应用（假设名称为tcc-demo4dubbo-client）调用的远程服务端应用名称为${tcc-server-appname}（如tcc-demo4dubbo-server）且Endpoint名称为${tcc-server-endname}，则1）除remote-service外还必须提供两个配置，其ID分别为${tcc-server-appname}-remote-service、${tcc-server-appname}-${tcc-server-endname}-remote-service；2）上述两个配置必须指定url，url为dubbo://${tcc-server-appname}:${tcc-server-appport}。
