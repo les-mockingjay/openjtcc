@@ -32,10 +32,10 @@ import org.bytesoft.openjtcc.remote.Committable;
 import org.bytesoft.openjtcc.remote.Prepareable;
 import org.bytesoft.openjtcc.remote.RemoteTerminator;
 import org.bytesoft.openjtcc.remote.Rollbackable;
+import org.bytesoft.openjtcc.supports.NativeBeanFactory;
 import org.bytesoft.openjtcc.supports.dubbo.RemoteInvocationService;
 import org.bytesoft.openjtcc.supports.dubbo.RemoteInvocationType;
 import org.bytesoft.openjtcc.supports.rmi.RemoteInvocationInterceptor;
-import org.bytesoft.openjtcc.supports.spring.beanfactory.NativeBeanFactory;
 
 public class RemoteInvocationServerInvoker implements RemoteInvocationService {
 	private NativeBeanFactory beanFactory;

@@ -62,8 +62,6 @@ public class TransactionImpl extends TransactionArchive implements Transaction {
 
 	private boolean expireActivated;
 	private boolean transactionCompleting;
-	// private int transactionTimeout = 60 * 5;
-
 	/* statistic-flags */
 	private transient long transientFlags;
 
@@ -1206,14 +1204,6 @@ public class TransactionImpl extends TransactionArchive implements Transaction {
 	public void setTransactionLogger(TransactionLogger transactionLogger) {
 		this.transactionLogger = transactionLogger;
 	}
-
-	// public int getTransactionTimeout() {
-	// return transactionTimeout;
-	// }
-
-	// public void setTransactionTimeout(int transactionTimeout) {
-	// this.transactionTimeout = transactionTimeout;
-	// }
 
 	public TerminatorSkeleton getTerminatorSkeleton() {
 		return terminatorSkeleton;

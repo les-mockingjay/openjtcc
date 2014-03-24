@@ -202,7 +202,7 @@ public class TransactionManagerImpl implements TransactionManager, TimingProcess
 			if (global.isTransactionCompleting()) {
 				global.commitCompleteTransaction();
 			} else {
-				this.wrapCommitGlobalTransaction(global);
+				this.commitGlobalTransaction(global);
 			}
 		} else if (global.isTransactionCompleting()) {
 			global.commitCompleteTransaction();
@@ -211,10 +211,10 @@ public class TransactionManagerImpl implements TransactionManager, TimingProcess
 		}
 	}
 
-	private void wrapCommitGlobalTransaction(TransactionImpl transaction) throws HeuristicMixedException,
+	private void commitGlobalTransaction(TransactionImpl transaction) throws HeuristicMixedException,
 			HeuristicRollbackException, IllegalStateException, RollbackException, SecurityException, SystemException {
 		try {
-			this.commitGlobalTransaction();
+			this.handleCommitGlobalTransaction();
 		} catch (Exception ex) {
 			TransactionStatus transactionStatus = transaction.getTransactionStatus();
 			if (transactionStatus.isCommitting() || transactionStatus.isCommitFail()) {
@@ -235,7 +235,6 @@ public class TransactionManagerImpl implements TransactionManager, TimingProcess
 				} else if (ex instanceof RuntimeException) {
 					throw (RuntimeException) ex;
 				} else {
-					// never happen
 					RuntimeException rex = new RuntimeException();
 					rex.initCause(ex);
 					throw rex;
@@ -256,7 +255,7 @@ public class TransactionManagerImpl implements TransactionManager, TimingProcess
 		}
 	}
 
-	private void commitGlobalTransaction() throws HeuristicMixedException, HeuristicRollbackException,
+	private void handleCommitGlobalTransaction() throws HeuristicMixedException, HeuristicRollbackException,
 			IllegalStateException, RollbackException, SecurityException, SystemException {
 		TransactionImpl global = this.getCurrentTransaction();
 		JtaTransactionImpl internal = this.getTransaction();

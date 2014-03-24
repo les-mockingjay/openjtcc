@@ -13,20 +13,21 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this distribution; if not, see <http://www.gnu.org/licenses/>.
  */
-package org.bytesoft.openjtcc.supports.spring.beanfactory;
+package org.bytesoft.openjtcc.supports.spring;
 
 import java.io.Serializable;
 import java.lang.reflect.Proxy;
 import java.util.concurrent.atomic.AtomicLong;
 
+import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
 
 import org.bytesoft.openjtcc.Compensable;
-import org.bytesoft.openjtcc.supports.spring.bean.PropagateCompensableProxy;
+import org.bytesoft.openjtcc.supports.NativeBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
-public class PropagateBeanFactoryImpl implements NativeBeanFactory, ApplicationContextAware {
+public class NativeBeanFactoryImpl implements NativeBeanFactory, ApplicationContextAware {
 	private ApplicationContext applicationContext;
 	private TransactionManager transactionManager;
 
@@ -38,7 +39,19 @@ public class PropagateBeanFactoryImpl implements NativeBeanFactory, ApplicationC
 		if (interfaceClass.isInstance(beanInst) //
 				&& Compensable.class.isInstance(beanInst)//
 		) {
-			PropagateCompensableProxy<Serializable> proxy = new PropagateCompensableProxy<Serializable>();
+			if (this.transactionManager == null) {
+				throw new RuntimeException();
+			}
+
+			try {
+				if (this.transactionManager.getTransaction() != null) {
+					throw new RuntimeException();
+				}
+			} catch (SystemException ex) {
+				throw new RuntimeException(ex);
+			}
+
+			NativeCompensableProxy<Serializable> proxy = new NativeCompensableProxy<Serializable>();
 			proxy.setBeanName(beanId);
 			proxy.setTarget((Compensable<Serializable>) beanInst);
 			proxy.setProxyId(atomic.incrementAndGet());

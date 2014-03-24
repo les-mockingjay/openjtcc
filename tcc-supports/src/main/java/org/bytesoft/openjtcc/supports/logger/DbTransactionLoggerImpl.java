@@ -112,7 +112,7 @@ public class DbTransactionLoggerImpl extends JdbcDaoSupport implements Transacti
 			connection = this.getConnection();
 
 			StringBuilder ber = new StringBuilder();
-			ber.append("insert into tcc_service(");
+			ber.append("insert into tcc_compensable(");
 			ber.append("application, endpoint, global_tx_id, branch_qualifier");
 			ber.append(", coordinator, bean_name) values (?, ?, ?, ?, ?, ?)");
 			stmt = connection.prepareStatement(ber.toString());
@@ -150,7 +150,7 @@ public class DbTransactionLoggerImpl extends JdbcDaoSupport implements Transacti
 			connection = this.getConnection();
 
 			StringBuilder ber = new StringBuilder();
-			ber.append("update tcc_service set variable = ?, try_committed = ? ");
+			ber.append("update tcc_compensable set variable = ?, try_committed = ? ");
 			ber.append("where application = ? and endpoint = ? and global_tx_id = ? and branch_qualifier = ?");
 			stmt = connection.prepareStatement(ber.toString());
 
@@ -395,7 +395,7 @@ public class DbTransactionLoggerImpl extends JdbcDaoSupport implements Transacti
 			connection = this.getConnection();
 
 			StringBuilder ber = new StringBuilder();
-			ber.append("update tcc_service set try_committed = ? ");
+			ber.append("update tcc_compensable set try_committed = ? ");
 			ber.append(", confirmed = ?, cancelled = ?, committed = ?, rolledback = ? ");
 			ber.append("where application = ? and endpoint = ? and global_tx_id = ? and branch_qualifier = ?");
 			stmt = connection.prepareStatement(ber.toString());
@@ -520,7 +520,7 @@ public class DbTransactionLoggerImpl extends JdbcDaoSupport implements Transacti
 			StringBuilder ber = new StringBuilder();
 			ber.append("select s.global_tx_id, s.branch_qualifier, s.coordinator, s.bean_name, s.variable");
 			ber.append(", s.try_committed, s.confirmed, s.cancelled, s.committed, s.rolledback ");
-			ber.append("from tcc_service s ");
+			ber.append("from tcc_compensable s ");
 			ber.append("left join tcc_transaction t on (");
 			ber.append("      t.application = s.application ");
 			ber.append("  and t.endpoint = s.endpoint ");

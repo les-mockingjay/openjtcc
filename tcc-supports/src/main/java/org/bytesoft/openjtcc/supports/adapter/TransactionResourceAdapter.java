@@ -134,7 +134,7 @@ public class TransactionResourceAdapter implements ResourceAdapter {
 		}
 
 		long costMillis = System.currentTimeMillis() - begin;
-		logger.info(String.format("[ResourceAdapter] stop successful. cost: %s", costMillis));
+		logger.info(String.format("[ResourceAdapter] stop successful. cost-millis: %s", costMillis));
 		return success;
 	}
 

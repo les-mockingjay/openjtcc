@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this distribution; if not, see <http://www.gnu.org/licenses/>.
  */
-package org.bytesoft.openjtcc.supports.spring.bean;
+package org.bytesoft.openjtcc.supports.spring;
 
 import java.io.Serializable;
 
@@ -27,11 +27,11 @@ import org.bytesoft.openjtcc.TransactionManagerImpl;
 import org.bytesoft.openjtcc.supports.AbstractSynchronization;
 import org.bytesoft.openjtcc.xa.XidImpl;
 
-public class NativeCompensableSynchronization<T extends Serializable> extends AbstractSynchronization {
+public class PropagateCompensableSynchronization<T extends Serializable> extends AbstractSynchronization {
 	private TransactionManager transactionManager;
 	private Compensable<T> compensable;
 
-	public NativeCompensableSynchronization(Compensable<T> service) {
+	public PropagateCompensableSynchronization(Compensable<T> service) {
 		this.compensable = service;
 	}
 
@@ -47,8 +47,8 @@ public class NativeCompensableSynchronization<T extends Serializable> extends Ab
 			transaction.registerSynchronization(this);
 		} catch (IllegalStateException ex) {
 		} catch (SystemException ex) {
-		} catch (RollbackException ex) {
 		} catch (RuntimeException ex) {
+		} catch (RollbackException ex) {
 		}
 	}
 
@@ -58,9 +58,6 @@ public class NativeCompensableSynchronization<T extends Serializable> extends Ab
 
 	@Override
 	public void afterCompletion(XidImpl xid, int status) {
-		// if (created) {
-		// this.compensable.setServiceContext(null);
-		// }
 	}
 
 	public void setTransactionManager(TransactionManager transactionManager) {
