@@ -92,7 +92,7 @@ tcc.timeout为事务超时时间（单位：秒）。
   # 业务实现中必须注入CompensableContext（在openjtcc.xml中定义，beanId为compensableContext）；
   # 推荐使用注解来定义事务传播属性（在业务接口和Compensable接口定义的方法上）；
   # Try方法中必须通过CompensableContext.setCompensableVariable(Serializable)方法来设置用于Confirm/Cancel的参数。该参数将在调用Compensable.confirm(Serializable)/Compensable.cancel(Serializable)时提供给业务实现类。
-  # 必须通过NativeBeanFactory（在openjtcc.xml中配置，beanId为nativeBeanFactory）来获取本地Service的引用；
+  # Action/Servlet/Main调用Service时，必须通过NativeBeanFactory（在openjtcc.xml中配置，beanId为nativeBeanFactory）来获取本地Service的引用；当前方法以在TCC事务中时，不可以再通过NativeBeanFactory获取CompensableService。
 
 ===== 本地Service调用：业务接口 =====
 {{{
