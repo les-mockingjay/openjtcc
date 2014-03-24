@@ -57,10 +57,9 @@ tcc.timeout为事务超时时间（单位：秒）。
 <dubbo:application name="${tcc.application}" />
 <dubbo:consumer timeout="60000" retries="0" />
 <dubbo:registry address="multicast://224.5.6.7:23421" />
-<dubbo:protocol name="dubbo" port="20881" />
+<dubbo:protocol name="dubbo" port="${dubbo.port}" />
 <dubbo:service ref="remoteInvocationService" interface="org.bytesoft.openjtcc.supports.dubbo.RemoteInvocationService" />
 }}}
-
 
 ===== Dubbo客户端应用配置 =====
 {{{
