@@ -1,4 +1,6 @@
 #summary Downloads
 
 ===Downloads===
-请在[http://pan.baidu.com/s/1hq3ffxU openjtcc-0.1]下载openjtcc（版本0.1）。
+下载地址：
+  * [http://pan.baidu.com/s/1hq3ffxU openjtcc-0.1-java7]
+  * [http://pan.baidu.com/s/1ntE0ro9 openjtcc-0.1-java6]
