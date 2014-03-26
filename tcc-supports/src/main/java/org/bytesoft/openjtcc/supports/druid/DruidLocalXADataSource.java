@@ -119,7 +119,6 @@ public class DruidLocalXADataSource implements XADataSource, DataSource {
 		return new DruidLocalXAConnection(pooledConnection);
 	}
 
-	@Override
 	public Logger getParentLogger() throws SQLFeatureNotSupportedException {
 		throw new SQLFeatureNotSupportedException();
 	}

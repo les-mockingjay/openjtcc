@@ -15,8 +15,10 @@
  */
 package org.bytesoft.utils;
 
+import java.io.Closeable;
+
 public class CommonUtils {
-	public static void close(AutoCloseable closeable) {
+	public static void close(Closeable closeable) {
 		if (closeable != null) {
 			try {
 				closeable.close();

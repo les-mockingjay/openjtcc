@@ -28,6 +28,7 @@ import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -52,7 +53,6 @@ import org.bytesoft.openjtcc.supports.serialize.TerminatorMarshaller;
 import org.bytesoft.openjtcc.xa.XidFactory;
 import org.bytesoft.openjtcc.xa.XidImpl;
 import org.bytesoft.utils.ByteUtils;
-import org.bytesoft.utils.CommonUtils;
 import org.springframework.jdbc.core.support.JdbcDaoSupport;
 
 /**
@@ -99,7 +99,7 @@ public class DbTransactionLoggerImpl extends JdbcDaoSupport implements Transacti
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		} finally {
-			CommonUtils.close(stmt);
+			closeStatement(stmt);
 			this.releaseConnection(connection);
 		}
 	}
@@ -137,7 +137,7 @@ public class DbTransactionLoggerImpl extends JdbcDaoSupport implements Transacti
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		} finally {
-			CommonUtils.close(stmt);
+			closeStatement(stmt);
 			this.releaseConnection(connection);
 		}
 	}
@@ -182,7 +182,7 @@ public class DbTransactionLoggerImpl extends JdbcDaoSupport implements Transacti
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		} finally {
-			CommonUtils.close(stmt);
+			closeStatement(stmt);
 			this.releaseConnection(connection);
 		}
 	}
@@ -240,7 +240,7 @@ public class DbTransactionLoggerImpl extends JdbcDaoSupport implements Transacti
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		} finally {
-			CommonUtils.close(stmt);
+			closeStatement(stmt);
 			this.releaseConnection(connection);
 		}
 	}
@@ -292,7 +292,7 @@ public class DbTransactionLoggerImpl extends JdbcDaoSupport implements Transacti
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		} finally {
-			CommonUtils.close(stmt);
+			closeStatement(stmt);
 			this.releaseConnection(connection);
 		}
 	}
@@ -323,7 +323,7 @@ public class DbTransactionLoggerImpl extends JdbcDaoSupport implements Transacti
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		} finally {
-			CommonUtils.close(stmt);
+			closeStatement(stmt);
 			this.releaseConnection(connection);
 		}
 	}
@@ -354,7 +354,7 @@ public class DbTransactionLoggerImpl extends JdbcDaoSupport implements Transacti
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		} finally {
-			CommonUtils.close(stmt);
+			closeStatement(stmt);
 			this.releaseConnection(connection);
 		}
 	}
@@ -383,7 +383,7 @@ public class DbTransactionLoggerImpl extends JdbcDaoSupport implements Transacti
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		} finally {
-			CommonUtils.close(stmt);
+			closeStatement(stmt);
 			this.releaseConnection(connection);
 		}
 	}
@@ -421,7 +421,7 @@ public class DbTransactionLoggerImpl extends JdbcDaoSupport implements Transacti
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		} finally {
-			CommonUtils.close(stmt);
+			closeStatement(stmt);
 			this.releaseConnection(connection);
 		}
 	}
@@ -457,7 +457,7 @@ public class DbTransactionLoggerImpl extends JdbcDaoSupport implements Transacti
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		} finally {
-			CommonUtils.close(stmt);
+			closeStatement(stmt);
 			this.releaseConnection(connection);
 		}
 	}
@@ -504,8 +504,8 @@ public class DbTransactionLoggerImpl extends JdbcDaoSupport implements Transacti
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		} finally {
-			CommonUtils.close(rs);
-			CommonUtils.close(stmt);
+			closeResultSet(rs);
+			closeStatement(stmt);
 			this.releaseConnection(connection);
 		}
 
@@ -588,8 +588,8 @@ public class DbTransactionLoggerImpl extends JdbcDaoSupport implements Transacti
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		} finally {
-			CommonUtils.close(rs);
-			CommonUtils.close(stmt);
+			closeResultSet(rs);
+			closeStatement(stmt);
 		}
 
 		return serviceMap;
@@ -646,8 +646,8 @@ public class DbTransactionLoggerImpl extends JdbcDaoSupport implements Transacti
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		} finally {
-			CommonUtils.close(rs);
-			CommonUtils.close(stmt);
+			closeResultSet(rs);
+			closeStatement(stmt);
 		}
 
 		return transactionMap;
@@ -704,8 +704,8 @@ public class DbTransactionLoggerImpl extends JdbcDaoSupport implements Transacti
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		} finally {
-			CommonUtils.close(rs);
-			CommonUtils.close(stmt);
+			closeResultSet(rs);
+			closeStatement(stmt);
 		}
 
 		return metaMap;
@@ -743,6 +743,26 @@ public class DbTransactionLoggerImpl extends JdbcDaoSupport implements Transacti
 			}
 		}
 		return baos.toByteArray();
+	}
+
+	public static void closeStatement(Statement stmt) {
+		if (stmt != null) {
+			try {
+				stmt.close();
+			} catch (Exception ex) {
+				ex.printStackTrace();
+			}
+		}
+	}
+
+	public static void closeResultSet(ResultSet rs) {
+		if (rs != null) {
+			try {
+				rs.close();
+			} catch (Exception ex) {
+				ex.printStackTrace();
+			}
+		}
 	}
 
 	public void setCompensableMarshaller(CompensableMarshaller compensableMarshaller) {
