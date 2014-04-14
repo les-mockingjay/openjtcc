@@ -4,7 +4,7 @@
 
 	<groupId>org.bytesoft</groupId>
 	<artifactId>tcc-core</artifactId>
-	<version>0.1</version>
+	<version>0.1.1</version>
 	<packaging>jar</packaging>
 
 	<name>tcc-core</name>
@@ -31,7 +31,7 @@
 		<dependency>
 			<groupId>org.bytesoft</groupId>
 			<artifactId>tcc-common</artifactId>
-			<version>0.1</version>
+			<version>0.1.1</version>
 		</dependency>
 	</dependencies>
 </project>

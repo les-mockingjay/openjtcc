@@ -53,9 +53,10 @@ public class JtaResourceCoordinator {
 			} else {
 				try {
 					isSameRM = existedHolder.xaRes.isSameRM(xares);
-				} catch (XAException e) {
+				} catch (XAException ex) {
+					ex.printStackTrace();
 				} catch (RuntimeException ex) {
-					// TODO
+					ex.printStackTrace();
 				}
 			}
 			if (isSameRM) {
@@ -142,7 +143,8 @@ public class JtaResourceCoordinator {
 			}
 
 		} catch (RuntimeException ex) {
-			throw ex;
+			// throw ex;
+			throw new RollbackException();
 		}
 	}
 
@@ -186,15 +188,19 @@ public class JtaResourceCoordinator {
 			XAResourceArchive holder = enlistedItr.next();
 			try {
 				this.delistResource(holder, XAResource.TMSUCCESS);
-			} catch (SystemException e) {
-				// TODO
+			} catch (SystemException ex) {
+				// TODO ignore
+				ex.printStackTrace();
 			} catch (RuntimeException ex) {
-				// TODO
+				// TODO ignore
+				ex.printStackTrace();
 			}
 		}
 	}
 
 	public synchronized void resumeAllResource() throws IllegalStateException, SystemException {
+		boolean errorExists = false;
+		// boolean rollbackRequired = false;
 		Iterator<XAResourceArchive> itr = this.suspendedXAResources.iterator();
 		while (itr.hasNext()) {
 			XAResourceArchive holder = itr.next();
@@ -202,15 +208,40 @@ public class JtaResourceCoordinator {
 			itr.remove();
 			try {
 				holder.xaRes.start(holder.xid, XAResource.TMRESUME);
-			} catch (XAException e) {
-				// TODO
+			} catch (XAException xae) {
+				xae.printStackTrace();
+
+				switch (xae.errorCode) {
+				case XAException.XAER_RMFAIL:
+				case XAException.XAER_DUPID:
+				case XAException.XAER_OUTSIDE:
+				case XAException.XAER_NOTA:
+				case XAException.XAER_INVAL:
+				case XAException.XAER_PROTO:
+					break;
+				case XAException.XAER_RMERR:
+
+					errorExists = true;
+					break;
+				default:
+					// rollbackRequired = true;
+				}
 			} catch (RuntimeException ex) {
 				// TODO
+				ex.printStackTrace();
 			}
 		}
+
+		/* if (rollbackRequired) { throw new RollbackRequiredException(); } else */
+		if (errorExists) {
+			throw new SystemException();
+		}
+
 	}
 
 	public synchronized void suspendAllResource() throws IllegalStateException, SystemException {
+		// boolean rollbackRequired = false;
+		boolean errorExists = false;
 		Iterator<XAResourceArchive> itr = this.enlistedXAResources.iterator();
 		while (itr.hasNext()) {
 			XAResourceArchive holder = itr.next();
@@ -218,11 +249,29 @@ public class JtaResourceCoordinator {
 			itr.remove();
 			try {
 				holder.xaRes.end(holder.xid, XAResource.TMSUSPEND);
-			} catch (XAException e) {
-				// TODO
+			} catch (XAException xae) {
+				xae.printStackTrace();
+				switch (xae.errorCode) {
+				case XAException.XAER_RMFAIL:
+				case XAException.XAER_NOTA:
+				case XAException.XAER_INVAL:
+				case XAException.XAER_PROTO:
+					break;
+				case XAException.XAER_RMERR:
+					errorExists = true;
+					break;
+				default:
+					// rollbackRequired = true;
+				}
 			} catch (RuntimeException ex) {
 				// TODO
+				ex.printStackTrace();
 			}
+		}
+
+		/* if (rollbackRequired) { throw new RollbackRequiredException(); } else */
+		if (errorExists) {
+			throw new SystemException();
 		}
 	}
 
